@@ -1,0 +1,26 @@
+| Generated using R version 2.15.0 (2012-03-30)
+| on Wed Aug 29 15:36:33 2012
+| function call: C50:::makeNamesFile(x = raw[, -ncol(raw)], y = raw$V21)
+outcome.
+
+outcome: a,b.
+V1: a,b,c,d.
+V2: continuous.
+V3: c,e,d,a,b.
+V4: g,c,d,e,j,a,b,h,f,i.
+V5: continuous.
+V6: e,b,a,d,c.
+V7: c,a,d,e,b.
+V8: continuous.
+V9: d,a,b,c.
+V10: c,b,a.
+V11: continuous.
+V12: d,a,c,b.
+V13: continuous.
+V14: b,a,c.
+V15: b,a,c.
+V16: continuous.
+V17: b,d,a,c.
+V18: continuous.
+V19: a,b.
+V20: b,a.
