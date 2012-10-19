@@ -1,11 +1,11 @@
-45b15a710b7a042f4490e1ec8e225425 *DESCRIPTION
+9a2a0b21e338e9ea38cc84436011de08 *DESCRIPTION
 16fb4482f436e55910adff142c6603ea *NAMESPACE
 bc24296913ea549f2c36c2cbc1ba4db2 *R/C5.0.R
 c4c2574bb473c7f6ce4bea94c5e80988 *R/QuinlanAttributes.R
 96908b3edeabb9711371eb132325fb5d *R/formatAttributes.R
 f5d811060943d73b0019eaf50caac008 *R/makeDataFile.R
 6fac9f02899c0c30538c00d22a588f29 *R/makeNamesFile.R
-62a173932197829de8385aa4ec5da8b2 *R/predict.C5.0.R
+b1b001e4da65089cf0b5adc37d77927b *R/predict.C5.0.R
 a09f1d6c68ac7954b65916c51d9e97d1 *cleanup
 1ccd53fb149fad14e8715a24cc398251 *cleanup.win
 05a95bd1f4caf51003855e8b80e9e4f7 *configure
@@ -29,10 +29,10 @@ bc357569072e55f74a554b5493a8dbba *inst/examples/Tests1/testCases1.R
 b1da9297a2d41d9a48838bdbeb7a67d9 *inst/examples/Tests1/testCasesIris.R
 d0f6669a955cde7643a8ac47003422eb *inst/examples/cost.R
 f41c99cf848fe64eeb122009c1da55b1 *inst/examples/iris.R
-f7f11da0d45824d5aa94a378a8c2011d *man/C5.0.Rd
+f48f414f96efcf2d5a4bcfc2428fba3e *man/C5.0.Rd
 f1939fa397b2c5b9a65127e6b309aa75 *man/C5.0Control.Rd
 f72a527c06ebacb03a3003a770882e28 *man/churn.Rd
-9667c43e765c3933b1d358ec51b6a267 *man/predict.C5.0.Rd
+b8cc580bdcccbc166228cf92506415e8 *man/predict.C5.0.Rd
 e3ae20f688ac66b1d1427b91ba488a52 *man/summary.C5.0.Rd
 7e7b686c2426c43cb63a3827c7d49a35 *man/varImp.C5.0.Rd
 7dc1fb073ef973668b2e0ab29d4e72a9 *src/Makevars.in

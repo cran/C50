@@ -9,7 +9,7 @@ This function produces predicted classes or confidence values from a C5.0 model.
 \usage{
 \method{predict}{C5.0}(object, newdata = NULL, 
         trials = object$trials["Actual"],
-        type = "class", ...)
+        type = "class", na.action = na.pass, ...)
 }
 
 \arguments{
@@ -25,6 +25,9 @@ for prediction. See the note below.  }
 
   \item{type}{
 either \code{"class"} for the predicted class or \code{"prob"} for model confidence values.
+}
+  \item{na.action}{
+when using a formula for the original model fit, how should missing values be handled?
 }
   \item{\dots}{
 other options (not currently used)

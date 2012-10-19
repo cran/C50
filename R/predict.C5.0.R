@@ -1,5 +1,5 @@
 
-predict.C5.0 <- function (object, newdata = NULL, trials = object$trials["Actual"], type = "class", ...) 
+predict.C5.0 <- function (object, newdata = NULL, trials = object$trials["Actual"], type = "class", na.action = na.pass, ...) 
 {
   if(!(type %in% c("class", "prob"))) stop("type should be either 'class', 'confidence' or 'prob'")
   if(object$cost != "" & type == "prob") stop("confidence values (i.e. class probabilities) should not be used with costs")
@@ -8,7 +8,7 @@ predict.C5.0 <- function (object, newdata = NULL, trials = object$trials["Actual
   if (!is.null(object$Terms))
     {
       object$Terms <- delete.response(object$Terms)
-      newdata <- model.frame(object$Terms, newdata, na.action = na.fail, xlev = object$xlevels) 
+      newdata <- model.frame(object$Terms, newdata, na.action = na.action, xlev = object$xlevels) 
     } else newdata <- newdata[, object$predictors, drop = FALSE]
 
 

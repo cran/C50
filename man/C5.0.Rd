@@ -152,7 +152,7 @@ Original GPL C code by Ross Quinlan, R code and modifications to C by
 Max Kuhn, Steve Weston and Nathan Coulter
 }
 \note{
-The command line version currently supports more dat types than the R
+The command line version currently supports more data types than the R
 port. Currently, numeric, factor and ordered factors are allowed as
 predictors.
 }
