@@ -38,8 +38,9 @@ C5.0.default <- function(x, y,
       costString <- makeCostFile(costs)
     } else costString <- ""
 
-  if(trials < 1 | trials > 100)
-    stop("number of boosting iterations must be between 1 and 100")
+  maxtrials <- 100
+  if(trials < 1 | trials > maxtrials)
+    stop(paste("number of boosting iterations must be between 1 and" ,maxtrials))
 
   if(!is.data.frame(x) & !is.matrix(x)) stop("x must be a matrix or data frame")
 

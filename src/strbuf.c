@@ -14,6 +14,8 @@
 #define FALSE 0
 #endif
 
+#define EXTRA_EXTEND 8192
+
 /* Declare all local functions */
 static int extend(STRBUF *sb, unsigned int nlen);
 
@@ -167,7 +169,7 @@ int strbuf_write(STRBUF *sb, const unsigned char *data, unsigned int n)
 
     /* If the new string won't fit, extend sb */
     if (nlen > sb->len)
-        if (extend(sb, 2 * nlen) != 0)
+        if (extend(sb, nlen + EXTRA_EXTEND) != 0)
             return -1;
 
     /* Copy the data into the buffer, and update the position and size */
@@ -196,8 +198,10 @@ int strbuf_printf(STRBUF *sb, const unsigned char *format, ...)
 int strbuf_vprintf(STRBUF *sb, const unsigned char *format, va_list ap)
 {
     int s;
+    unsigned int nlen;
     int size = sb->len - sb->i;  /* Remaining space left */
     va_list ap2;
+    va_list ap3;
 
     /* Copy ap to ap2 in case we need to call vsnprintf a second time */
     va_copy(ap2, ap);
@@ -206,25 +210,50 @@ int strbuf_vprintf(STRBUF *sb, const unsigned char *format, va_list ap)
      * Attempt to write to "sb".  The return value "s" is the number of
      * characters (not including the trailing '\0') which would have
      * been written to the string if enough space had been available.
-     * That tells us how much we need to extend "sb" by if the first
-     * attempt fails.
+     * That (may) tell us how much we need to extend "sb" by if the first
+     * attempt fails.  On Windows, it returns -1, so we have to call
+     * _vscprintf to determine the amount of memory that we need.
      */
-    if ((s = vsnprintf(sb->buf + sb->i, size, format, ap)) >= size) {
+    if ((s = vsnprintf(sb->buf + sb->i, size, format, ap)) >= size || s < 0) {
+#ifdef WIN32
+        if (s < 0) {
+            /*
+             * Copy ap2 to ap3, and then call _vscprintf to determine
+             * the amount of memory that we need.
+             */
+            va_copy(ap3, ap2);
+            s = _vscprintf(format, ap3);
+            va_end(ap3);
+        }
+#endif
+        /*
+         * This is sort of an assertion, but it's possible
+         * it could happen if _vscprintf failed, or on very
+         * old versions of glibc.
+         */
+        if (s < 0) {
+            va_end(ap2);
+            return -1;
+        }
         /*
          * We didn't have enough space, but now we know how
          * much we need, so extend the STRBUF and do it again.
-         * We'll ask for twice as much as we need, which is
-         * our simple-minded strategy for reducing the number
-         * of times that we allocate memory.
+         * We'll also ask for a bit extra to avoid calling
+         * realloc quite so often.
          */
-        unsigned int nlen = sb->n + s + 1;  /* Minimum length needed */
+        nlen = sb->n + s + 1;  /* Minimum length needed */
 
-        if (extend(sb, 2 * nlen) != 0)
+        if (extend(sb, nlen + EXTRA_EXTEND) != 0) {
+            va_end(ap2);
             return -1;
+        }
 
         size = sb->len - sb->i;  /* Recompute remaining space left */
         s = vsnprintf(sb->buf + sb->i, size, format, ap2);
-        assert(s < size);
+        if (s >= size || s < 0) {
+            va_end(ap2);
+            return -1;
+        }
     }
 
     /* This corresponds to the va_copy */
@@ -260,7 +289,7 @@ int strbuf_putc(STRBUF *sb, int c)
 
     /* If the new character won't fit, extend sb */
     if (nlen > sb->len)
-        if (extend(sb, 2 * nlen) != 0)
+        if (extend(sb, nlen + EXTRA_EXTEND) != 0)
             return -1;
 
     /* Put the character into the buffer, and update the position and size */
@@ -319,7 +348,7 @@ unsigned char *strbuf_getall(STRBUF *sb)
     if (sb->n >= sb->len) {
         /* sb->n should never actually be larger than sb->len */
         assert(sb->n == sb->len);
-        if (extend(sb, 2 * sb->n) != 0)
+        if (extend(sb, sb->n + EXTRA_EXTEND) != 0)
             return NULL;
     }
 

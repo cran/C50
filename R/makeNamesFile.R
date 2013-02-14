@@ -39,6 +39,9 @@ makeNamesFile <-
   }
 
 
+# TODO: In C5.0.default, user can pass in a costs matrix where the column names
+# and row names are not in the same order, which would probably break this code.
+# Fix.  NC ,2012-07-11 
 makeCostFile <- function(cst)
   {
     classes <- colnames(cst)  

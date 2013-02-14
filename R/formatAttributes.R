@@ -14,10 +14,13 @@
 
 formatCharacters <- function(x)
   {
+    ## Note that "useBytes=TRUE" is specified to avoid errors
+    ## such as "input string 18 is invalid in this locale".
+
     ## for some reason, escaping : doesn't work...
-    x <- gsub(":", ".", x, fixed = TRUE)
+    x <- gsub(":", ".", x, fixed = TRUE, useBytes=TRUE)
     ## gsub special chars with escapes
-    gsub("([^[:alnum:]^[:space:]])", '\\\\\\1' , x)
+    gsub("([^[:alnum:]^[:space:]])", '\\\\\\1' , x, useBytes=TRUE)
     
   }
 

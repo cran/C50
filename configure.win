@@ -4,3 +4,4 @@ if test -n "$GCC_COMPILER"; then
 else
   echo "PKG_CFLAGS = -g" > src/Makevars.win
 fi
+echo "PKG_CPPFLAGS = -DNDEBUG"
