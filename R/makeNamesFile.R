@@ -31,7 +31,7 @@ makeNamesFile <-
                  "\n", label, outcomeInfo,
                  sep = "")
     varData <- QuinlanAttributes(x)
-    varData <- paste(formatCharacters(names(varData)), ": ", varData, sep = "", collapse = "\n")
+    varData <- paste(formatCharacters(names(varData)), ":", varData, sep = "", collapse = "\n")
     out <- paste(out, "\n", varData, "\n", sep = "")
     out
 
