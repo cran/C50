@@ -37,6 +37,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdint.h>
 
 #include "transform.h"
 #include "redefine.h"
@@ -630,7 +631,7 @@ void ListAttsUsed()
     {
 	if ( DefOp(D[e]) == OP_ATT )
 	{
-	    Att = (Attribute) DefSVal(D[e]);
+	    Att = (Attribute) (intptr_t) DefSVal(D[e]);
 	    if ( ! DefUses[Att] )
 	    {
 		DefUses[Att] = true;

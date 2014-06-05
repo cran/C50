@@ -94,7 +94,7 @@ ClassNo PredictTreeClassify(DataRec Case, Tree DecisionTree)
 
     ForEach(c, 1, MaxClass)
     {
-	Prior = Prior = DecisionTree->ClassDist[c] / DecisionTree->Cases;
+	Prior = DecisionTree->ClassDist[c] / DecisionTree->Cases;
 	ClassSum[c] =
 	    (ClassSum[0] * ClassSum[c] + Prior) / (ClassSum[0] + 1);
     }

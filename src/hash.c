@@ -239,11 +239,13 @@ int ht_setvoid(void *ht, const char *key, void *value)
     return ht_set(ht, key, value, HT_VOIDTYPE);
 }
 
+#if 0
 /* Set the value of an entry to an integer value */
 int ht_setint(void *ht, const char *key, int value)
 {
     return ht_set(ht, key, (void *) value, HT_INTTYPE);
 }
+#endif
 
 /* Set the value of an entry to a string */
 int ht_setstr(void *ht, const char *key, char *value)
@@ -275,6 +277,7 @@ void *ht_getvoid(void *ht, const char *key, void *defval, void *errval)
     return entry->value;
 }
 
+#if 0
 /* Get the "int" value of an entry in the hash table */
 int ht_getint(void *ht, const char *key, int defval, int errval)
 {
@@ -298,6 +301,7 @@ int ht_getint(void *ht, const char *key, int defval, int errval)
 
     return (int) entry->value;
 }
+#endif
 
 /* Get the "char *" value of an entry in the hash table */
 char *ht_getstr(void *ht, const char *key, char *defval, char *errval)

@@ -59,7 +59,7 @@
 
 extern void FreeGlobals();
 extern void Rprintf(const char *, ...);
-extern int SetTrials (int *internal ,int user);
+extern void SetTrials (int *internal ,int user);
 
 /*************************************************************************/
 /*									 */
@@ -305,7 +305,7 @@ void ShowRules(int Spaces)
     }
 }
 
-int SetTrials (int *internal ,int user) {
+void SetTrials (int *internal ,int user) {
     /*effects:
 	    internal may be modified
     */

@@ -34,6 +34,8 @@
 #include "defns.h"
 #include "extern.h"
 
+#include <stdint.h>
+
 #include "transform.h"
 #include "redefine.h"
 
@@ -137,10 +139,7 @@ void *Pmalloc(size_t Bytes)
 
     Error(NOMEM, "", "");
 
-#ifdef WIN32
     return Nil;
-#endif
-
 }
 
 
@@ -161,9 +160,7 @@ void *Prealloc(void *Present, size_t Bytes)
 
     Error(NOMEM, "", "");
 
-#ifdef WIN32
     return Nil;
-#endif
 }
 
 
@@ -180,10 +177,7 @@ void *Pcalloc(size_t Number, unsigned int Size)
 
     Error(NOMEM, "", "");
 
-#ifdef WIN32
     return Nil;
-#endif
-
 }
 
 
@@ -432,7 +426,7 @@ void Error(int ErrNo, String S1, String S2)
 	    break;
 
 	case TOOMANYVALS:
-	    sprintf(Msg, E_TOOMANYVALS(S1, (int) (long) S2));
+	    sprintf(Msg, E_TOOMANYVALS(S1, (int) (intptr_t) S2));
 	    break;
 
 	case BADDISCRETE:

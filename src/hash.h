@@ -31,12 +31,12 @@ extern void *ht_value(void *entry);
 
 /* High level hash table setting functions */
 extern int ht_setvoid(void *ht, const char *key, void *value);
-extern int ht_setint(void *ht, const char *key, int value);
+// extern int ht_setint(void *ht, const char *key, int value);
 extern int ht_setstr(void *ht, const char *key, char *value);
 
 /* High level hash table accessor functions */
 extern void *ht_getvoid(void *ht, const char *key, void *defval, void *errval);
-extern int ht_getint(void *ht, const char *key, int defval, int errval);
+// extern int ht_getint(void *ht, const char *key, int defval, int errval);
 extern char *ht_getstr(void *ht, const char *key, char *defval, char *errval);
 
 #endif

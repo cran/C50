@@ -390,6 +390,8 @@ float CondBits(Condition C)
 
 	    return AttTestBits + Code;
     }
+
+    return 0.0;
 }
 
 
