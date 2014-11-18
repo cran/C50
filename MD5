@@ -1,11 +1,11 @@
-1b477db646064a75bd0e02ba2e93de06 *DESCRIPTION
+679793b03dba56950442fbb5b00d693a *DESCRIPTION
 16fb4482f436e55910adff142c6603ea *NAMESPACE
 ee5270f1b41ea30af293d3bfa1b63ec3 *R/C5.0.R
 a47dc25b35d78dbe80a8e0cb8807b638 *R/QuinlanAttributes.R
 95943712866dd1fc6c6ee9d293e48cea *R/formatAttributes.R
 32ed016421ce3482c2b94b86c89fed97 *R/makeDataFile.R
 98efc7f5613e48bea9b9f7f36864414c *R/makeNamesFile.R
-b1b001e4da65089cf0b5adc37d77927b *R/predict.C5.0.R
+3de95f9d82c3cd7ab65c14d74f12e33a *R/predict.C5.0.R
 a09f1d6c68ac7954b65916c51d9e97d1 *cleanup
 1ccd53fb149fad14e8715a24cc398251 *cleanup.win
 05a95bd1f4caf51003855e8b80e9e4f7 *configure
