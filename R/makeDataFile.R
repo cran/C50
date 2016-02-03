@@ -1,4 +1,4 @@
-makeDataFile <- function(x, y)
+makeDataFile <- function(x, y, w = NULL)
   {
     if(!is.data.frame(x)) x <- as.data.frame(x)
     convert <- unlist(lapply(x, function(x) is.factor(x) | is.character(x)))
@@ -9,6 +9,7 @@ makeDataFile <- function(x, y)
     if(is.null(y)) y <- rep(NA_real_, nrow(x))
     y <- formatCharacters(as.character(y))
     x <- cbind(y, x)
+    if(!is.null(w)) x <- cbind(x, w)
     ## Determine the locations of missing values
     naIndex <- lapply(x, function(x) which(is.na(x)))
     anyNA <- any(unlist(lapply(naIndex, length)) > 0)

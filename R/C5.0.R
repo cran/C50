@@ -48,8 +48,8 @@ C5.0.default <- function(x, y,
     stop("case weights must be numeric")
   
   ## TODO: add case weights to these files when needed
-  namesString <- makeNamesFile(x, y, label = control$label, comments = TRUE)
-  dataString <- makeDataFile(x, y)
+  namesString <- makeNamesFile(x, y, w = weights, label = control$label, comments = TRUE)
+  dataString <- makeDataFile(x, y, weights)
 
   Z <- .C("C50",
           as.character(namesString),
@@ -148,7 +148,7 @@ C5.0.formula <- function (formula, data, weights, subset, na.action = na.pass, .
   wt <- model.extract(m, "weights")
   if (length(wt) == 0L)  wt <- NULL
   m <- m[,-1,drop = FALSE]
-  out <- C5.0.default(x = m, y = y, ...)
+  out <- C5.0.default(x = m, y = y, weights = wt, ...)
   out$call <- call
   out$Terms <- Terms
   out$xlevels <- .getXlevels(Terms, m)

@@ -37,8 +37,7 @@ one indicates that a single model is used.
 A logical: should the tree be decomposed into a rule-based model?
 }
   \item{weights}{
-an optional numeric vector of case weights (not currently implemented)
-}
+an optional numeric vector of case weights. Note that the data used for the case weights will not be used as a splitting variable in the model (see \url{http://www.rulequest.com/see5-win.html#CASEWEIGHT} for Quinlan's notes on case weights).} 
   \item{control}{
 a list of control parameters; see \code{\link{C5.0Control}}
 }

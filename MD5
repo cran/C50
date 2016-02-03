@@ -1,10 +1,10 @@
-421013779062e476cdf63504b6694d8d *DESCRIPTION
+755ff7112827482dca8da4c5be98ce84 *DESCRIPTION
 16fb4482f436e55910adff142c6603ea *NAMESPACE
-07a8a443161f81bbd9a51d82ad151a85 *R/C5.0.R
+ee5270f1b41ea30af293d3bfa1b63ec3 *R/C5.0.R
 a47dc25b35d78dbe80a8e0cb8807b638 *R/QuinlanAttributes.R
 95943712866dd1fc6c6ee9d293e48cea *R/formatAttributes.R
-f5d811060943d73b0019eaf50caac008 *R/makeDataFile.R
-f52929152f6af9f5479b154a0352ad51 *R/makeNamesFile.R
+32ed016421ce3482c2b94b86c89fed97 *R/makeDataFile.R
+98efc7f5613e48bea9b9f7f36864414c *R/makeNamesFile.R
 b1b001e4da65089cf0b5adc37d77927b *R/predict.C5.0.R
 a09f1d6c68ac7954b65916c51d9e97d1 *cleanup
 1ccd53fb149fad14e8715a24cc398251 *cleanup.win
@@ -12,7 +12,7 @@ a09f1d6c68ac7954b65916c51d9e97d1 *cleanup
 c64ddf60e45a350ad7cad64761e8d74c *configure.ac
 98c7f00a58f336142ecbba33fcf394a2 *configure.win
 74c6a6843148b1d93558142a9f7d30b6 *data/churn.RData
-f48f414f96efcf2d5a4bcfc2428fba3e *man/C5.0.Rd
+a93c8f72b14cb1e8f734fb155aad2887 *man/C5.0.Rd
 f1939fa397b2c5b9a65127e6b309aa75 *man/C5.0Control.Rd
 f72a527c06ebacb03a3003a770882e28 *man/churn.Rd
 b8cc580bdcccbc166228cf92506415e8 *man/predict.C5.0.Rd
