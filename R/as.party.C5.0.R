@@ -79,6 +79,7 @@ plot.C5.0 <- function(x,
   plot(x, ...)
 }
 
+#' @importFrom stats terms model.response model.weights
 model.frame.C5.0 <- function (formula, ...) {
   if (!is.null(formula$model))
     return(formula$model)
@@ -91,7 +92,7 @@ model.frame.C5.0 <- function (formula, ...) {
   ))]
   if (is.null(mf$na.action))
     mf$na.action <- na.omit
-  mf$drop.unused.levels <- TRUE
+  mf$drop.unused.levels <- FALSE
   mf[[1L]] <- as.name("model.frame")
   env <- if (!is.null(environment(formula$Terms)))
     environment(formula$Terms)
@@ -99,21 +100,36 @@ model.frame.C5.0 <- function (formula, ...) {
     parent.frame()
   mf <- eval(mf, env)
   
-  rsp <- strsplit(paste(formula$call[2]), " ")[[1]][1]
-  tmp <- mf[rsp]
-  mf[, 1:length(formula$pred)] <- mf[formula$pred]
-  mf[, length(formula$pred) + 1] <- tmp
-  names(mf) <- c(formula$pred, rsp)
-  if (any(is.na(names(mf)))) {
-    i1 <- as.vector(which(is.na(names(mf))))
-    if (is.na(match("(weights)", names(mf)))) {
-      names(mf)[i1] <- "(weights)"
-    }
-  }
+  term_info <- terms(mf)
+  # Now we want to get the appropriate columns back in a certain
+  # order and with some potential name changes. 
   
-  return(mf)
+  # First get the predictors
+  x_names <- labels(term_info)
+  # in case of non-standard names:
+  x_names <- gsub("`", "", x_names)
+  dat <- mf[, x_names, drop = FALSE]
+  # Add the outcome column with the right name
+  all_names <- all.vars(attr(term_info, "predvars"))
+  y_name <- all_names[attr(term_info, "response")]
+  dat[[y_name]] <- model.response(mf)
+  # Potentially get weights
+  wts <- model.weights(mf)
+  if (!is.null(wts))
+    dat$`(weights)` <- wts
+  
+  return(dat)
 }
 
+#' Convert C5.0 object to party format
+#' @param obj A `C5.0` class object'
+#' @param trial An integer for the specific tree to plot. 
+#' @param ... Not currently used. 
+#' @return A `party` object
+#' @keywords internal
+#' @method as.party C5.0
+#' @export
+#' @export as.party.C5.0
 as.party.C5.0 <- function(obj, trial = 0, ...) {
   out <- strsplit(obj$output, "\n")[[1]]
   out <- out[out != ""]
@@ -198,7 +214,7 @@ as.party.C5.0 <- function(obj, trial = 0, ...) {
       indtrees <- grep("SubTree", out)
     }
   }
-  is.default <- length(grep("default", paste(obj$call[1]))) > 0
+  is.default <- !("Terms" %in% names(obj))
   if (!is.default) {
     mf <- model.frame(obj)
   } else{
@@ -222,13 +238,71 @@ as.party.C5.0 <- function(obj, trial = 0, ...) {
   if (length(out) == 1) {
     pn <- as.partynode(partynode(1L), from = 1L)
   } else{
-    f.mat <- lapply(1:length(out), function(i) {
-      a1 <- strsplit(out[i], " ")[[1]]
+    n.cat <-sapply(1:length(obj$pred), function(i)is.factor(mf[, obj$pred[i]]))
+    adj.pred<-as.vector(sapply(obj$pred,function(i){gsub("`","",i)}))
+        f.mat <- lapply(1:length(out), function(i) {
+      valpred<-integer(0)
+      vec<-strsplit(out[i],":")[[1]]
+      vec<-vec[vec!=""]
+      varp<-as.vector(sapply(adj.pred,function(i){
+        ind<-grep(i,vec)
+        if(length(ind)==0)return(-1)
+        return(ind)
+      }))
+      if(!any(varp>0)){
+        stop("Variable match was not found.")
+      }
+      valpred<-as.vector(which(varp>0))
+      valpred<-valpred[which.max(nchar(adj.pred[valpred]))]
+      a1<-gsub(obj$pred[valpred],"",out[i])
+      
+      
+      if(n.cat[valpred]){
+        ##process this
+        if(length(grep(" in \\{",a1))>0){
+          vec<-a1
+          while(length(grep("^in",vec))==0){
+            vec<-sub("^.","",vec)
+          }
+          a2<-sub("in \\{","",vec)
+          if(length(grep(":",a2))>0){
+            a2<-strsplit(a2,"\\}:")
+            if(length(a2)>2){
+              stop("The code currently does not work with factor levels or responses that have the symbol '}:' in them.")
+            }
+          }else{
+            a2<-sub("\\}$","",a2)
+          }
+          
+          a2<-a2[[1]][1]
+          a1<-sub(a2,"X",vec)
+          a2<-paste0("{",a2,"}",collapse="")
+        }else{
+          vec<-a1
+          while(length(grep("^=",vec))==0){
+            vec<-sub("^.","",vec)
+          }
+          
+          a2<-sub("^= ","",vec)
+          a2<-strsplit(a2,":")
+          if(length(a2)>2){
+            stop("The code currently does not work with factor levels or responses that have the symbol ':' in them.")
+          }
+          a2<-a2[[1]][1]
+          a1<-sub(a2,"X",vec)
+        }
+      }
+      a1 <- strsplit(a1, " ")[[1]]
       a1 <- gsub(":", "", a1)
       a1 <- gsub("\\.\\.\\.", "", a1)
       a1 <- a1[a1 != ""]
-      a1
+      if(n.cat[valpred]){
+        a1[2]<-a2
+      }
+      as.vector(c(adj.pred[valpred],a1))
     })
+                   
+                   
     indvars <- sapply(1:length(f.mat), function(i) {
       v = match(obj$predictors, f.mat[[i]][1])
       a1 <- which(!is.na(v))
@@ -256,10 +330,7 @@ as.party.C5.0 <- function(obj, trial = 0, ...) {
     vars <-
       sapply(1:length(f.mat), function(i)
         strsplit(f.mat[[i]][2], "=")[[1]][1])
-    n.cat <-
-      sapply(1:length(obj$pred), function(i)
-        is.factor(mf[, obj$pred[i]]))
-    xlevels <- list()
+     xlevels <- list()
     if (sum(n.cat) > 0) {
       r1 = 1
       for (i in 1:length(n.cat)) {
@@ -378,7 +449,7 @@ as.party.C5.0 <- function(obj, trial = 0, ...) {
                 fitted = dat1 ,
                 terms = terms(fn))
   } else{
-    p1 <- match(strsplit(paste(obj$call[2]), " ")[[1]][1], names(mf))
+    p1 <- all.vars(attr(obj$Terms, "predvars"))[attr(obj$Terms, "response")]
     if (is.na(p1)) {
       stop("Error in Response")
     }
@@ -396,7 +467,7 @@ as.party.C5.0 <- function(obj, trial = 0, ...) {
         pn,
         data = mf[0L, , drop = FALSE],
         fitted = fitted,
-        terms = terms(mf),
+        terms = obj$Terms,
         info = list(method = "C5.0")
       )
   }

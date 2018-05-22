@@ -1,19 +1,18 @@
 Package: C50
 Type: Package
 Title: C5.0 Decision Trees and Rule-Based Models
-Version: 0.1.1
-Date: 2017-11-20
+Version: 0.1.2
 Authors@R: c(
     person("Max", "Kuhn", , "mxkuhn@gmail.com", c("aut", "cre")),
-    person("Weston", "Steve", role = "ctb"),
-    person("Culp", "Mark", role = "ctb"),
-    person("Coulter", "Nathan", role = "ctb"),
+    person("Steve", "Weston", role = "ctb"),
+    person("Mark", "Culp", role = "ctb"),
+    person("Nathan", "Coulter", role = "ctb"),
     person("Ross", "Quinlan", role = "aut", comment = "Author of imported C code"),
     person("RuleQuest Research", role = "cph", comment = "Copyright holder of imported C code"),
     person("Rulequest Research Pty Ltd.", role = "cph", comment = "Copyright holder of imported C code")) 
 Maintainer: Max Kuhn <mxkuhn@gmail.com>
 Description: C5.0 decision trees and rule-based models for pattern recognition that extend the work of Quinlan (1993, ISBN:1-55860-238-0).
-Imports: partykit, Cubist (>= 0.2.0)
+Imports: partykit, Cubist (>= 0.2.1)
 Depends: R (>= 2.10.0)
 Suggests: recipes, knitr
 URL: https://topepo.github.io/C5.0
@@ -23,13 +22,13 @@ LazyLoad: yes
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2017-12-01 18:22:25 UTC; max
+Packaged: 2018-05-22 17:56:29 UTC; max
 Author: Max Kuhn [aut, cre],
-  Weston Steve [ctb],
-  Culp Mark [ctb],
-  Coulter Nathan [ctb],
+  Steve Weston [ctb],
+  Mark Culp [ctb],
+  Nathan Coulter [ctb],
   Ross Quinlan [aut] (Author of imported C code),
   RuleQuest Research [cph] (Copyright holder of imported C code),
   Rulequest Research Pty Ltd. [cph] (Copyright holder of imported C code)
 Repository: CRAN
-Date/Publication: 2017-12-01 18:50:36 UTC
+Date/Publication: 2018-05-22 20:55:23 UTC
