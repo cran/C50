@@ -1,4 +1,4 @@
-f13a1d2e7f06118c3a1b8e6ae099b00e *DESCRIPTION
+8872b6698ca8bb2903632addd034ce6b *DESCRIPTION
 c5707e590ddf751e9928423a5157939a *NAMESPACE
 fc2cef2030c581f59df1060cad63dc5e *NEWS.md
 06a21daf004da6d7ec7f9455288bcb3f *R/C5.0.R
@@ -33,7 +33,7 @@ cdd47e17d1e31eb985053af03c8cfdba *src/construct.c
 a859e8c7fe2595c0cacf013bb9c9342d *src/contin.c
 6f119d991d37dea956a8659a23d5d5b7 *src/defns.h
 0fba703a810af7e9dc319ef62f496f83 *src/discr.c
-fe956c0cd79144128991bd713d58005c *src/extern.h
+16820327822c5788f7b8d8c20f6d5482 *src/extern.h
 f7dde0a0247476ab84c177e62fcc1ba5 *src/formrules.c
 ba3a514e7d5e06310371ed66781a9cca *src/formtree.c
 4a2a2443f8d996e4f231a07d9a048407 *src/getdata.c
