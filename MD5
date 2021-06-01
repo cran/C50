@@ -1,6 +1,6 @@
-a1dcc59bbe1499fee98b8d66b1d2e50b *DESCRIPTION
+bb8d5c2f3ef59cb337834f9ca3528222 *DESCRIPTION
 c5707e590ddf751e9928423a5157939a *NAMESPACE
-96876f3b92a45b524bb4469031761604 *NEWS.md
+4252203e4adb20051b92b6b9752abe0f *NEWS.md
 06a21daf004da6d7ec7f9455288bcb3f *R/C5.0.R
 2143758ef19d1141f3e00cd8a9e86800 *R/as.party.C5.0.R
 d95e7f80c2f2083a7eda94b7ec341ab7 *R/cost_matrix.R
@@ -14,10 +14,10 @@ a09f1d6c68ac7954b65916c51d9e97d1 *cleanup
 c24f011d71bc411fdb2586aeb2794af0 *configure.win
 d94653ec1321e7f5744af3d94c7d4d0f *inst/doc/C5.0.R
 8fd145cade49c525a85e8c4c8a7df038 *inst/doc/C5.0.Rmd
-2ed3c06fe5519935df1213f710a03dd9 *inst/doc/C5.0.html
+0c58dca6df6210f03b53fd81f8e4cc56 *inst/doc/C5.0.html
 1c27d5c68c28b7144d0acf5a3b24ac3a *inst/doc/Class_Probability_Calcs.R
 3595ff2d9c3037c61bc4a91018743bff *inst/doc/Class_Probability_Calcs.Rmd
-eb5a3bf21d4837dfbb6916527cffbab7 *inst/doc/Class_Probability_Calcs.html
+6fe8d4cb85a05792723b90d353045241 *inst/doc/Class_Probability_Calcs.html
 4b62060762b41f2de95c8ace74c76612 *man/C5.0.Rd
 214e836ac703ed60051b248b3683aeeb *man/C5.0Control.Rd
 d750ba4e4ffc70b429b25df641c14617 *man/C5imp.Rd
@@ -33,7 +33,7 @@ cdd47e17d1e31eb985053af03c8cfdba *src/construct.c
 a859e8c7fe2595c0cacf013bb9c9342d *src/contin.c
 6f119d991d37dea956a8659a23d5d5b7 *src/defns.h
 0fba703a810af7e9dc319ef62f496f83 *src/discr.c
-fe956c0cd79144128991bd713d58005c *src/extern.h
+4c6caf9b01cf560ffc09cff6461fc70d *src/extern.h
 f7dde0a0247476ab84c177e62fcc1ba5 *src/formrules.c
 ba3a514e7d5e06310371ed66781a9cca *src/formtree.c
 4a2a2443f8d996e4f231a07d9a048407 *src/getdata.c
