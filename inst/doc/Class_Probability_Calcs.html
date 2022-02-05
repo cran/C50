@@ -150,7 +150,7 @@ Call:
 C5.0.formula(formula = Species ~ ., data = iris)
 
 
-C5.0 [Release 2.07 GPL Edition]     Fri May 28 11:47:56 2021
+C5.0 [Release 2.07 GPL Edition]     Sat Feb  5 08:18:12 2022
 -------------------------------
 
 Class specified by attribute `outcome&#39;
@@ -196,28 +196,28 @@ Time: 0.0 secs</code></pre>
 130 0.04761905  0.3333333 0.6190476</code></pre>
 <p>When we wanted to describe the technical aspects of the <a href="https://www.rulequest.com/see5-info.html">C5.0</a> and <a href="https://www.rulequest.com/cubist-info.html">cubist</a> models, the main source of information on these models was the raw C source code from the <a href="https://www.rulequest.com/download.html">RuleQuest website</a>. For many years, both of these models were proprietary commercial products and we only recently open-sourced. Our intuition is that Quinlan quietly evolved these models from the versions described in the most recent publications to what they are today. For example, it would not be unreasonable to assume that C5.0 uses <a href="https://en.wikipedia.org/wiki/AdaBoost">AdaBoost</a>. From the sources, a similar reweighting scheme is used but it does not appear to be the same.</p>
 <p>For classifying new samples, the C sources have</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ClassNo PredictTreeClassify(DataRec Case, Tree DecisionTree){</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  ClassNo   c, C;</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span>    Prior;</span>
+<div class="sourceCode" id="cb5"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ClassNo PredictTreeClassify<span class="op">(</span>DataRec Case<span class="op">,</span> Tree DecisionTree<span class="op">){</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  ClassNo   c<span class="op">,</span> C<span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span>    Prior<span class="op">;</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="co">/*  Save total leaf count in ClassSum[0]  */</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  ForEach(c, <span class="dv">0</span>, MaxClass) {</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    ClassSum[c] = <span class="dv">0</span>;</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  ForEach<span class="op">(</span>c<span class="op">,</span> <span class="dv">0</span><span class="op">,</span> MaxClass<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    ClassSum<span class="op">[</span>c<span class="op">]</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  PredictFindLeaf(Case, DecisionTree, Nil, <span class="fl">1.0</span>);</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  PredictFindLeaf<span class="op">(</span>Case<span class="op">,</span> DecisionTree<span class="op">,</span> Nil<span class="op">,</span> <span class="fl">1.0</span><span class="op">);</span></span>
 <span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  C = SelectClassGen(DecisionTree-&gt;Leaf, (Boolean)(MCost != Nil), ClassSum);</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  C <span class="op">=</span> SelectClassGen<span class="op">(</span>DecisionTree<span class="op">-&gt;</span>Leaf<span class="op">,</span> <span class="op">(</span>Boolean<span class="op">)(</span>MCost <span class="op">!=</span> Nil<span class="op">),</span> ClassSum<span class="op">);</span></span>
 <span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="co">/*  Set all confidence values in ClassSum  */</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  ForEach(c, <span class="dv">1</span>, MaxClass){</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    Prior = DecisionTree-&gt;ClassDist[c] / DecisionTree-&gt;Cases;</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    ClassSum[c] = (ClassSum[<span class="dv">0</span>] * ClassSum[c] + Prior) / (ClassSum[<span class="dv">0</span>] + <span class="dv">1</span>);</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  Confidence = ClassSum[C];</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  ForEach<span class="op">(</span>c<span class="op">,</span> <span class="dv">1</span><span class="op">,</span> MaxClass<span class="op">){</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    Prior <span class="op">=</span> DecisionTree<span class="op">-&gt;</span>ClassDist<span class="op">[</span>c<span class="op">]</span> <span class="op">/</span> DecisionTree<span class="op">-&gt;</span>Cases<span class="op">;</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    ClassSum<span class="op">[</span>c<span class="op">]</span> <span class="op">=</span> <span class="op">(</span>ClassSum<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">*</span> ClassSum<span class="op">[</span>c<span class="op">]</span> <span class="op">+</span> Prior<span class="op">)</span> <span class="op">/</span> <span class="op">(</span>ClassSum<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">+</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  Confidence <span class="op">=</span> ClassSum<span class="op">[</span>C<span class="op">];</span></span>
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> C;</span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> C<span class="op">;</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>Here:</p>
 <ul>
 <li>The predicted probability is the “confidence” value</li>
