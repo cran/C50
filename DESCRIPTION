@@ -1,7 +1,7 @@
 Package: C50
 Type: Package
 Title: C5.0 Decision Trees and Rule-Based Models
-Version: 0.1.6
+Version: 0.1.7
 Authors@R: c(
     person("Max", "Kuhn", , "mxkuhn@gmail.com", c("aut", "cre")),
     person("Steve", "Weston", role = "ctb"),
@@ -19,12 +19,12 @@ URL: https://topepo.github.io/C5.0/
 BugReports: https://github.com/topepo/C5.0/issues
 License: GPL-3
 LazyLoad: yes
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.1.9000
 VignetteBuilder: knitr
 Encoding: UTF-8
 Biarch: true
 NeedsCompilation: yes
-Packaged: 2022-02-05 13:18:12 UTC; maxkuhn
+Packaged: 2022-11-09 00:56:10 UTC; max
 Author: Max Kuhn [aut, cre],
   Steve Weston [ctb],
   Mark Culp [ctb],
@@ -33,4 +33,4 @@ Author: Max Kuhn [aut, cre],
   RuleQuest Research [cph] (Copyright holder of imported C code),
   Rulequest Research Pty Ltd. [cph] (Copyright holder of imported C code)
 Repository: CRAN
-Date/Publication: 2022-02-05 13:50:06 UTC
+Date/Publication: 2022-11-09 08:40:43 UTC
