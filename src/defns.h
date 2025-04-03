@@ -35,7 +35,7 @@
     sample estimates for large datasets.
     This can lead to some variablility,
     especially when used with SMP  */
-//#define SAMPLE_ESTIMATES
+// #define SAMPLE_ESTIMATES
 
 #include <ctype.h>
 #include <float.h>
@@ -90,8 +90,8 @@
 #define THEORYFRAC 0.23 /* discount rate for estimated coding cost */
 
 #define Nil 0 /* null pointer */
-#define false 0
-#define true 1
+#define binfalse 0
+#define bintrue 1
 #define None -1
 #define Epsilon 1E-4
 #define MinLeaf 0.05 /* minimum weight for non-null leaf */
@@ -131,11 +131,11 @@
 #define Log(x) ((x) <= 0 ? 0.0 : log((double)x) / Log2)
 
 #define Bit(b) (1 << (b))
-#define In(b, s) ((s[(b) >> 3]) & Bit((b)&07))
+#define In(b, s) ((s[(b) >> 3]) & Bit((b) & 07))
 #define ClearBits(n, s) memset(s, 0, n)
 #define CopyBits(n, f, t) memcpy(t, f, n)
-#define SetBit(b, s) (s[(b) >> 3] |= Bit((b)&07))
-#define ResetBit(b, s) (s[(b) >> 3] ^= Bit((b)&07))
+#define SetBit(b, s) (s[(b) >> 3] |= Bit((b) & 07))
+#define ResetBit(b, s) (s[(b) >> 3] ^= Bit((b) & 07))
 
 #define ForEach(v, f, l) for (v = f; v <= l; ++v)
 
@@ -166,7 +166,7 @@
 #define Space(s) (s == ' ' || s == '\n' || s == '\r' || s == '\t')
 #define SkipComment while ((c = InChar(f)) != '\n' && c != EOF)
 
-#define P1(x) (rint((x)*10) / 10)
+#define P1(x) (rint((x) * 10) / 10)
 
 #define No(f, l) ((l) - (f) + 1)
 

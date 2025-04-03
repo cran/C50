@@ -54,7 +54,7 @@ void WinnowAtts(void)
   Attribute Att, Removed = 0, Best;
   CaseNo i, Bp, Ep;
   float Base;
-  Boolean First = true, *Upper;
+  Boolean First = bintrue, *Upper;
   ClassNo c;
   extern Attribute *DList;
   extern int NDList;
@@ -91,7 +91,7 @@ and remaining 50% for measuring attribute importance  */
   Split = AllocZero(MaxAtt + 1, Boolean);
   Used = AllocZero(MaxAtt + 1, Boolean);
 
-  Base = TrialTreeCost(true);
+  Base = TrialTreeCost(bintrue);
 
   /*  Remove attributes when doing so would reduce error cost  */
 
@@ -104,7 +104,7 @@ and remaining 50% for measuring attribute importance  */
 
   /*  If any removed, rebuild tree and reinstate if error increases  */
 
-  if (Removed && TrialTreeCost(false) > Base) {
+  if (Removed && TrialTreeCost(binfalse) > Base) {
     ForEach(Att, 1, MaxAtt) {
       if (AttImp[Att] < 0) {
         AttImp[Att] = 1;
@@ -134,7 +134,7 @@ and remaining 50% for measuring attribute importance  */
 
     /*  Print remaining attributes ordered by importance  */
 
-    while (true) {
+    while (bintrue) {
       Best = 0;
       ForEach(Att, 1, MaxAtt) {
         if (AttImp[Att] >= 1 && (!Best || AttImp[Att] > AttImp[Best])) {
@@ -146,7 +146,7 @@ and remaining 50% for measuring attribute importance  */
 
       if (First) {
         fprintf(Of, T_EstImportance);
-        First = false;
+        First = binfalse;
       }
       if (AttImp[Best] >= 1.005) {
         fprintf(Of, "%7d%%  %s\n", (int)((AttImp[Best] - 1) * 100 + 0.5),
@@ -159,7 +159,7 @@ and remaining 50% for measuring attribute importance  */
   }
 
   if (Removed) {
-    Winnowed = true;
+    Winnowed = bintrue;
 
     /*  Reset DList  */
 
@@ -251,10 +251,11 @@ float TrialTreeCost(Boolean FirstTime)
     ForEach(Att, 1, MaxAtt) {
 
       if (!Used[Att]) {
-        Verbosity(1,
-                  if (Att != ClassAtt && !Skip(Att)) {
-                    fprintf(Of, "  %s not used\n", AttName[Att]);
-                  })
+        Verbosity(
+            1,
+            if (Att != ClassAtt && !Skip(Att)) {
+              fprintf(Of, "  %s not used\n", AttName[Att]);
+            })
 
             if (Split[Att]) {
           AttImp[Att] = 1;
@@ -287,7 +288,7 @@ float TrialTreeCost(Boolean FirstTime)
 
 /*************************************************************************/
 /*                                                                       */
-/* Determine the error rate or cost of T on cases Fp through Lp  */
+/* Determine the error rate or cost of T on cases Fp through Lp          */
 /*                                                                       */
 /*************************************************************************/
 
@@ -317,7 +318,7 @@ float ErrCost(Tree T, CaseNo Fp, CaseNo Lp)
 
 /*************************************************************************/
 /*                                                                       */
-/* Find attributes used in tree T      */
+/* Find attributes used in tree T                                        */
 /*                                                                       */
 /*************************************************************************/
 
@@ -327,7 +328,7 @@ void ScanTree(Tree T, Boolean *Used)
   DiscrValue v;
 
   if (T->NodeType) {
-    Used[T->Tested] = true;
+    Used[T->Tested] = bintrue;
 
     ForEach(v, 1, T->Forks) { ScanTree(T->Branch[v], Used); }
   }

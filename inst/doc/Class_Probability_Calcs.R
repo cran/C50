@@ -1,4 +1,4 @@
-## ---- echo = FALSE, results = "hide",message=FALSE,warning=FALSE--------------
+## ----echo = FALSE, results = "hide",message=FALSE,warning=FALSE---------------
 library(C50)
 library(knitr)
 opts_chunk$set(comment = NA, digits = 3, prompt = TRUE, tidy = FALSE)

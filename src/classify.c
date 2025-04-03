@@ -112,7 +112,7 @@ void FindLeaf(DataRec Case, Tree T, Tree PT, float Fraction)
   }
 
   if (T->NodeType && Tested) {
-    Tested[T->Tested] = true; /* for usage */
+    Tested[T->Tested] = bintrue; /* for usage */
   }
 
   switch (T->NodeType) {
@@ -366,7 +366,7 @@ ClassNo RuleClassify(DataRec Case, CRuleSet RS)
 
     if (Tested) {
       ForEach(d, 1, R->Size) {
-        Tested[R->Lhs[d]->Tested] = true; /* for usage */
+        Tested[R->Lhs[d]->Tested] = bintrue; /* for usage */
       }
     }
     if (UtilBand)
@@ -399,7 +399,7 @@ ClassNo RuleClassify(DataRec Case, CRuleSet RS)
 
   ForEach(c, 1, MaxClass) { ClassSum[c] /= TotWeight; }
 
-  Best = SelectClass(RS->SDefault, false);
+  Best = SelectClass(RS->SDefault, binfalse);
 
   /*  Set Confidence to the vote for the most specific rule of class Best  */
 
@@ -471,7 +471,7 @@ ClassNo PredictRuleClassify(DataRec Case, CRuleSet RS)
     return RS->SDefault;
   }
 
-  Best = SelectClassGen(RS->SDefault, false, ClassSum);
+  Best = SelectClassGen(RS->SDefault, binfalse, ClassSum);
 
   /*  Set Confidence to the maximum of the most specific applicable
 rule for class Best or the scaled ClassSum[Best] value  */
@@ -516,11 +516,10 @@ int FindOutcome(DataRec Case, Condition OneCond)
 
   case BrThresh: /* test of continuous attribute */
 
-    Outcome =
-        (Unknown(Case, Att)
-             ? -1
-             : NotApplic(Case, Att) ? 1
-                                    : CVal(Case, Att) <= OneCond->Cut ? 2 : 3);
+    Outcome = (Unknown(Case, Att)                ? -1
+               : NotApplic(Case, Att)            ? 1
+               : CVal(Case, Att) <= OneCond->Cut ? 2
+                                                 : 3);
     break;
 
   case BrSubset: /* subset test on discrete attribute  */
@@ -559,11 +558,11 @@ Boolean Matches(CRule R, DataRec Case)
 
   ForEach(d, 1, R->Size) {
     if (!Satisfies(Case, R->Lhs[d])) {
-      return false;
+      return binfalse;
     }
   }
 
-  return true;
+  return bintrue;
 }
 
 /*************************************************************************/
@@ -657,7 +656,7 @@ void CheckUtilityBand(int *u, RuleNo r, ClassNo Actual, ClassNo Default)
   ClassNo c;
 
   while (*u < UTILITY && r > UtilBand[*u]) {
-    c = SelectClass(Default, false);
+    c = SelectClass(Default, binfalse);
     if (c != Actual) {
       UtilErr[*u]++;
       if (MCost)
@@ -705,7 +704,7 @@ ClassNo BoostClassify(DataRec Case, int MaxTrial)
 
   ForEach(c, 1, MaxClass) { ClassSum[c] = Vote[c] / Total; }
 
-  return SelectClass(Default, false);
+  return SelectClass(Default, binfalse);
 }
 
 ClassNo PredictBoostClassify(DataRec Case, int MaxTrial)
@@ -729,7 +728,7 @@ ClassNo PredictBoostClassify(DataRec Case, int MaxTrial)
 
   ForEach(c, 1, MaxClass) { ClassSum[c] = Vote[c] / Total; }
 
-  Best = SelectClassGen(Default, false, ClassSum);
+  Best = SelectClassGen(Default, binfalse, ClassSum);
 
   Confidence = ClassSum[Best];
 
@@ -828,8 +827,8 @@ ClassNo Classify(DataRec Case)
 {
 
   return (TRIALS > 1 ? BoostClassify(Case, TRIALS - 1)
-                     : RULES ? RuleClassify(Case, RuleSet[0])
-                             : TreeClassify(Case, Pruned[0]));
+          : RULES    ? RuleClassify(Case, RuleSet[0])
+                     : TreeClassify(Case, Pruned[0]));
 }
 
 ClassNo PredictClassify(DataRec Case)
@@ -838,8 +837,8 @@ ClassNo PredictClassify(DataRec Case)
   NRulesUsed = 0;
 
   return (TRIALS > 1 ? PredictBoostClassify(Case, TRIALS - 1)
-                     : RULES ? PredictRuleClassify(Case, RuleSet[0])
-                             : PredictTreeClassify(Case, Pruned[0]));
+          : RULES    ? PredictRuleClassify(Case, RuleSet[0])
+                     : PredictTreeClassify(Case, Pruned[0]));
 }
 
 /*************************************************************************/
@@ -853,14 +852,11 @@ ClassNo PredictClassify(DataRec Case)
 float Interpolate(Tree T, ContValue Val)
 /*    -----------  */
 {
-  return (Val <= T->Lower
-              ? 1.0
-              : Val >= T->Upper
-                    ? 0.0
-                    : Val <= T->Mid ? 1 - 0.5 * (Val - T->Lower) /
-                                              (T->Mid - T->Lower + 1E-6)
-                                    : 0.5 - 0.5 * (Val - T->Mid) /
-                                                (T->Upper - T->Mid + 1E-6));
+  return (Val <= T->Lower   ? 1.0
+          : Val >= T->Upper ? 0.0
+          : Val <= T->Mid
+              ? 1 - 0.5 * (Val - T->Lower) / (T->Mid - T->Lower + 1E-6)
+              : 0.5 - 0.5 * (Val - T->Mid) / (T->Upper - T->Mid + 1E-6));
 }
 
 /*************************************************************************/
@@ -872,14 +868,11 @@ float Interpolate(Tree T, ContValue Val)
 float PredictInterpolate(Tree T, ContValue Val)
 /*    -----------  */
 {
-  return (
-      Val <= T->Lower
-          ? 1.0
-          : Val >= T->Upper
-                ? 0.0
-                : Val <= T->Cut
-                      ? 1 - 0.5 * (Val - T->Lower) / (T->Cut - T->Lower + 1E-10)
-                      : 0.5 * (Val - T->Upper) / (T->Cut - T->Upper + 1E-10));
+  return (Val <= T->Lower   ? 1.0
+          : Val >= T->Upper ? 0.0
+          : Val <= T->Cut
+              ? 1 - 0.5 * (Val - T->Lower) / (T->Cut - T->Lower + 1E-10)
+              : 0.5 * (Val - T->Upper) / (T->Cut - T->Upper + 1E-10));
 }
 
 /*************************************************************************/

@@ -195,9 +195,7 @@ void InvertFires(void)
   // ForEach(i, 0, MaxCase) { CovByPtr[i] += (size_t)CovByBlock; }
 
   size_t CovByBlockSize = 0;
-  ForEach(i, 1, MaxCase + 1) {
-    CovByBlockSize += CovBy[i - 1] + Extra;
-  }
+  ForEach(i, 1, MaxCase + 1) { CovByBlockSize += CovBy[i - 1] + Extra; }
   CovByBlock = Alloc(CovByBlockSize, Byte);
 
   CovByPtr[0] = CovByBlock;
@@ -404,7 +402,7 @@ void CoverClass(ClassNo Target)
   RuleNo r, Best;
   int j;
 
-  memset(Covered, false, MaxCase + 1);
+  memset(Covered, binfalse, MaxCase + 1);
 
   Remaining = ClassFreq[Target];
 
@@ -448,13 +446,13 @@ void CoverClass(ClassNo Target)
       Remaining -= NewTruePos;
       FalsePos += NewFalsePos;
 
-      RuleIn[Best] = true;
+      RuleIn[Best] = bintrue;
 
       Uncompress(Fires[Best], List);
       for (j = List[0]; j; j--) {
         i = List[j];
         if (!Covered[i]) {
-          Covered[i] = true;
+          Covered[i] = bintrue;
         }
       }
     }
@@ -500,7 +498,7 @@ void HillClimb(void)
   CaseCount Errs;
   double RuleBits = 0;
   int LastCost = 1E9, CurrentCost, AltCost, NewCost;
-  Boolean DeleteOnly = false;
+  Boolean DeleteOnly = binfalse;
 
   ForEach(r, 1, NRules) {
     if (RuleIn[r]) {
@@ -519,7 +517,7 @@ void HillClimb(void)
 
   /*  Add or drop rule with greatest reduction in coding cost  */
 
-  while (true) {
+  while (bintrue) {
     CurrentCost = NewCost = MessageLength(RuleCount, RuleBits, Errs);
 
     Verbosity(
@@ -559,7 +557,7 @@ void HillClimb(void)
     }
 
     if (!DeleteOnly && NewCost > CurrentCost) {
-      DeleteOnly = true;
+      DeleteOnly = bintrue;
       Verbosity(1, fprintf(Of, "(start delete mode)\n"))
     }
 
@@ -598,11 +596,11 @@ void HillClimb(void)
     /*  Update information about rules selected and current errors  */
 
     if (RuleIn[Toggle]) {
-      RuleIn[Toggle] = false;
+      RuleIn[Toggle] = binfalse;
       RuleBits -= Bits[Toggle];
       RuleCount--;
     } else {
-      RuleIn[Toggle] = true;
+      RuleIn[Toggle] = bintrue;
       RuleBits += Bits[Toggle];
       RuleCount++;
     }
@@ -859,7 +857,7 @@ void SetDefaultClass(void)
   double *UncoveredWeight, TotUncovered = 1E-3;
   CaseNo i, j;
 
-  memset(Covered, false, MaxCase + 1);
+  memset(Covered, binfalse, MaxCase + 1);
   UncoveredWeight = AllocZero(MaxClass + 1, double);
 
   /*  Check which cases are covered by at least one rule  */
@@ -870,7 +868,7 @@ void SetDefaultClass(void)
 
     Uncompress(Fires[r], List);
     for (j = List[0]; j; j--) {
-      Covered[List[j]] = true;
+      Covered[List[j]] = bintrue;
     }
   }
 
@@ -942,7 +940,7 @@ int OrderByUtility(void)
 
   /*  Find the rule that has the least beneficial effect on accuracy  */
 
-  while (true) {
+  while (bintrue) {
     Toggle = OutCount = 0;
 
     ForEach(r, 1, NRules) {
@@ -986,7 +984,7 @@ int OrderByUtility(void)
     }
 
     Drop[NDrop++] = Toggle;
-    RuleIn[Toggle] = false;
+    RuleIn[Toggle] = binfalse;
 
     Errs += DeltaErrs[Toggle];
   }
@@ -995,7 +993,7 @@ int OrderByUtility(void)
 
   while (--NDrop >= 0) {
     NewNRules++;
-    RuleIn[Drop[NDrop]] = true;
+    RuleIn[Drop[NDrop]] = bintrue;
     SwapRule(Drop[NDrop], NewNRules);
 
     /*  Have to alter rule number in Drop  */
@@ -1022,7 +1020,7 @@ int OrderByClass(void)
   ClassNo c;
 
   ForEach(c, 1, MaxClass) {
-    while (true) {
+    while (bintrue) {
       nr = 0;
       ForEach(r, NewNRules + 1, NRules) {
         if (RuleIn[r] && Rule[r]->Rhs == c &&

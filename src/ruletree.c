@@ -183,7 +183,7 @@ RuleTree GrowRT(RuleNo *RR, int RRN, CRule *Rule)
   /*  Choose test for this node  */
 
   TI = SelectTest(RR, RRN, Rule);
-  TestUsed[TI] = true;
+  TestUsed[TI] = bintrue;
 
   Node->CondTest = Test[TI];
 
@@ -197,9 +197,9 @@ the selected test go down branch 0; at classification time,
 any case with an unknown outcome for the selected test also
 goes to branch 0.  */
 
-  Node->Forks =
-      (Test[TI]->NodeType == BrDiscr ? MaxAttVal[Test[TI]->Tested]
-                                     : Test[TI]->NodeType == BrSubset ? 1 : 3);
+  Node->Forks = (Test[TI]->NodeType == BrDiscr    ? MaxAttVal[Test[TI]->Tested]
+                 : Test[TI]->NodeType == BrSubset ? 1
+                                                  : 3);
 
   Node->Branch = Alloc(Node->Forks + 1, RuleTree);
 
@@ -229,7 +229,7 @@ goes to branch 0.  */
     }
   }
 
-  TestUsed[TI] = false;
+  TestUsed[TI] = binfalse;
 
   /*  Free local storage  */
 

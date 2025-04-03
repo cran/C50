@@ -85,7 +85,7 @@ void ResubErrs(Tree T, CaseNo Fp, CaseNo Lp)
 
   PrevUnitWeights = UnitWeights;
   if (Missing)
-    UnitWeights = false;
+    UnitWeights = binfalse;
 
   T->Errors = 0;
   Bp = Fp;
@@ -98,9 +98,8 @@ void ResubErrs(Tree T, CaseNo Fp, CaseNo Lp)
 
     BranchCases = CountCases(Bp + Missing, Ep);
 
-    Factor = (!Missing ? 0
-                       : !CostWeights
-                             ? BranchCases / KnownCases
+    Factor = (!Missing       ? 0
+              : !CostWeights ? BranchCases / KnownCases
                              : SumNocostWeights(Bp + Missing, Ep) / KnownCases);
 
     if (BranchCases + Factor * MissingCases >= MinLeaf) {
@@ -240,7 +239,7 @@ void FindBounds(Tree T, CaseNo Fp, CaseNo Lp)
 
   PrevUnitWeights = UnitWeights;
   if (Missing > 0)
-    UnitWeights = false;
+    UnitWeights = binfalse;
 
   Bp = Fp;
 

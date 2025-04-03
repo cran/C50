@@ -48,7 +48,7 @@ DiscrValue MaxLeaves; /* target maximum tree size */
 #define SAMPLEUNIT 2000
 
 float ValThresh; /* minimum GR when evaluating sampled atts */
-Boolean Sampled; /* true if sampling used */
+Boolean Sampled; /* bintrue if sampling used */
 
 Attribute *Waiting = Nil, /* attribute wait list */
     NWaiting = 0;
@@ -122,7 +122,7 @@ void InitialiseTreeData(void)
 
   /*  Check whether all attributes have many discrete values  */
 
-  MultiVal = true;
+  MultiVal = bintrue;
   if (!SUBSET) {
     for (Att = 1; MultiVal && Att <= MaxAtt; Att++) {
       if (!Skip(Att) && Att != ClassAtt) {
@@ -133,7 +133,7 @@ void InitialiseTreeData(void)
 
   /*  See whether there are continuous attributes for subsampling  */
 
-  Subsample = false;
+  Subsample = binfalse;
 
   /*  Set parameters for RawExtraErrs() */
 
@@ -371,9 +371,9 @@ Must expect at least 10 of least prevalent class  */
   if (Subsample && No(Fp, Lp) > 5 * MaxClass * SAMPLEUNIT &&
       (ClassFreq[Least] * MaxClass * SAMPLEUNIT) / No(Fp, Lp) >= 10) {
     SampleEstimate(Fp, Lp, Cases);
-    Sampled = true;
+    Sampled = bintrue;
   } else {
-    Sampled = false;
+    Sampled = binfalse;
   }
 
   BestAtt = ChooseSplit(Fp, Lp, Cases, Sampled);
@@ -641,9 +641,9 @@ Attribute FindBestAtt(CaseCount Cases)
   ForEach(Att, 1, MaxAtt) {
     if (Gain[Att] >= 0.999 * MinGain && Info[Att] > 0) {
       Val = Gain[Att] / Info[Att];
-      NBr = (MaxAttVal[Att] <= 3 || Ordered(Att)
-                 ? 3
-                 : SUBSET ? Subsets[Att] : MaxAttVal[Att]);
+      NBr = (MaxAttVal[Att] <= 3 || Ordered(Att) ? 3
+             : SUBSET                            ? Subsets[Att]
+                                                 : MaxAttVal[Att]);
 
       if (Val > BestVal ||
           (Val > 0.999 * BestVal &&
@@ -726,7 +726,7 @@ void Divide(Tree T, CaseNo Fp, CaseNo Lp, int Level)
   KnownCases = T->Cases - (MissingCases = CountCases(Fp, Ep));
 
   if (Missing) {
-    UnitWeights = false;
+    UnitWeights = binfalse;
 
     /*  If using costs, must adjust branch factors to undo effects of
         reweighting cases  */
@@ -764,9 +764,8 @@ void Divide(Tree T, CaseNo Fp, CaseNo Lp, int Level)
 
     BranchCases = CountCases(Bp + Missing, Ep);
 
-    Factor = (!Missing ? 0
-                       : !CostWeights
-                             ? BranchCases / KnownCases
+    Factor = (!Missing       ? 0
+              : !CostWeights ? BranchCases / KnownCases
                              : SumNocostWeights(Bp + Missing, Ep) / KnownCases);
 
     if (BranchCases + Factor * MissingCases >= MinLeaf) {
@@ -830,45 +829,45 @@ CaseNo Group(DiscrValue V, CaseNo Bp, CaseNo Ep, Tree TestNode)
       }
     }
   } else /* skip non-existant N/A values */
-      if (V != 1 || TestNode->NodeType == BrSubset || SomeNA[Att]) {
-    /*  Group cases on the value of attribute Att, and depending
-        on the type of branch  */
+    if (V != 1 || TestNode->NodeType == BrSubset || SomeNA[Att]) {
+      /*  Group cases on the value of attribute Att, and depending
+          on the type of branch  */
 
-    switch (TestNode->NodeType) {
-    case BrDiscr:
+      switch (TestNode->NodeType) {
+      case BrDiscr:
 
-      ForEach(i, Bp, Ep) {
-        if (DVal(Case[i], Att) == V) {
-          Swap(Bp, i);
-          Bp++;
+        ForEach(i, Bp, Ep) {
+          if (DVal(Case[i], Att) == V) {
+            Swap(Bp, i);
+            Bp++;
+          }
         }
-      }
-      break;
+        break;
 
-    case BrThresh:
+      case BrThresh:
 
-      Thresh = TestNode->Cut;
-      ForEach(i, Bp, Ep) {
-        if (V == 1 ? NotApplic(Case[i], Att)
-                   : (CVal(Case[i], Att) <= Thresh) == (V == 2)) {
-          Swap(Bp, i);
-          Bp++;
+        Thresh = TestNode->Cut;
+        ForEach(i, Bp, Ep) {
+          if (V == 1 ? NotApplic(Case[i], Att)
+                     : (CVal(Case[i], Att) <= Thresh) == (V == 2)) {
+            Swap(Bp, i);
+            Bp++;
+          }
         }
-      }
-      break;
+        break;
 
-    case BrSubset:
+      case BrSubset:
 
-      SS = TestNode->Subset[V];
-      ForEach(i, Bp, Ep) {
-        if (In(XDVal(Case[i], Att), SS)) {
-          Swap(Bp, i);
-          Bp++;
+        SS = TestNode->Subset[V];
+        ForEach(i, Bp, Ep) {
+          if (In(XDVal(Case[i], Att), SS)) {
+            Swap(Bp, i);
+            Bp++;
+          }
         }
+        break;
       }
-      break;
     }
-  }
 
   return Bp - 1;
 }
