@@ -173,7 +173,7 @@
 #define EmptyNA(T) (T->Branch[1]->Cases < 0.01)
 
 #define Before(n1, n2)                                                         \
-  (n1->Tested < n2->Tested || n1->Tested == n2->Tested && n1->Cut < n2->Cut)
+  (n1->Tested < n2->Tested || (n1->Tested == n2->Tested && n1->Cut < n2->Cut))
 
 #define Swap(a, b)                                                             \
   {                                                                            \
@@ -480,8 +480,21 @@ void DumpOp(char OpCode, int Fi);
 Boolean UpdateTStack(char OpCode, ContValue F, String S, int Fi);
 AttValue EvaluateDef(Definition D, DataRec Case);
 
+/* rc50.c */
+
+double C50Start(void);
+void C50Build(double StartTime);
+
+/* rsample.c */
+
+void PredictLoadModel(int trials);
+void PredictOneCase(DataRec Case, int i, int *outputv, double *confidencev);
+
 /* getdata.c */
 
+void StartData(Boolean Train, CaseNo NCases);
+void KeepCase(DataRec DVec, Boolean Train, Boolean AllowUnknownClass);
+void FinishData(void);
 void GetData(FILE *Df, Boolean Train, Boolean AllowUnknownClass);
 DataRec GetDataRec(FILE *Df, Boolean Train);
 DataRec PredictGetDataRec(FILE *Df, Boolean Train);
@@ -495,6 +508,8 @@ void CheckValue(DataRec Case, Attribute Att);
 
 void GetMCosts(FILE *f);
 void PredictGetMCosts(FILE *Cf);
+void SetMCost(ClassNo Pred, ClassNo Real, float Val);
+void FinishMCosts(void);
 
 /* attwinnow.c */
 

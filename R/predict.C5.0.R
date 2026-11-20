@@ -34,6 +34,16 @@
 #'  terminal nodes may not be consistent with the final predicted
 #'  class. For this reason, requesting class probabilities from a
 #'  model using unequal costs will throw an error.
+#'#'   Factor or character values in `newdata` that were not in the
+#'  training data are treated as missing, with a warning, and C5.0
+#'  handles them as it handles any missing value. (Up to version
+#'  0.2.0, they made `predict()` stop with an error when `C5.0()` was
+#'  called with `x` and `y`.) With the formula method,
+#'  [stats::model.frame()] still gives an error for new levels of
+#'  factor and character columns.
+#'
+#'   Models fitted with version 0.2.0 or earlier can still be used
+#'  for prediction.
 #'
 #' @param object an object of class `C5.0`
 #' @param newdata a matrix or data frame of predictors
@@ -67,98 +77,133 @@
 #'
 #' @export
 #' @rawNamespace export(predict.C5.0)
-#' @importFrom Cubist makeDataFile makeNamesFile QuinlanAttributes
 predict.C5.0 <-
-  function (object,
-            newdata = NULL,
-            trials = object$trials["Actual"],
-            type = "class",
-            na.action = na.pass,
-            ...)  {
-    if (!(type %in% c("class", "prob")))
-      stop("type should be either 'class' or 'prob'",
-           call. = FALSE)
-    if (object$cost != "" &
-        type == "prob")
-      stop("confidence values (i.e. class probabilities) should ", "
-           not be used with costs",
-           call. = FALSE)
-    if (is.null(newdata))
-      stop("newdata must be non-null", call. = FALSE)
+  function(
+    object,
+    newdata = NULL,
+    trials = object$trials["Actual"],
+    type = "class",
+    na.action = na.pass,
+    ...
+  ) {
+    if (!(type %in% c("class", "prob"))) {
+      cli_abort("{.arg type} must be {.val class} or {.val prob}, not {.obj_type_friendly {type}}.")
+    }
+    if (
+      object$cost != "" &
+        type == "prob"
+    ) {
+      cli_abort("Confidence values (i.e. class probabilities) should not be used with costs.")
+    }
+    if (is.null(newdata)) {
+      cli_abort("{.arg newdata} must not be {.val NULL}.")
+    }
 
     if (!is.null(object$Terms)) {
       object$Terms <- delete.response(object$Terms)
       newdata <-
-        model.frame(object$Terms,
-                    newdata,
-                    na.action = na.action,
-                    xlev = object$xlevels)
-    } else
+        model.frame(
+          object$Terms,
+          newdata,
+          na.action = na.action,
+          xlev = object$xlevels
+        )
+    } else {
       newdata <- newdata[, object$predictors, drop = FALSE]
+    }
 
-    if (is.null(colnames(newdata)))
-      stop("column names are required", call. = FALSE)
+    if (is.null(colnames(newdata))) {
+      cli_abort("{.arg newdata} must have column names.")
+    }
 
-    if (length(trials) > 1)
-      stop("only one value of trials is allowed")
-    if (trials > object$trials["Actual"])
-      warning(
-        paste(
-          "'trials' should be <=",
-          object$trials["Actual"],
-          "for this object. Predictions generated using",
-          object$trials["Actual"],
-          "trials"
-        ),
-        call. = FALSE
-      )
+    if (length(trials) > 1) {
+      cli_abort("{.arg trials} must be a single value, not a vector of length {length(trials)}.")
+    }
+    if (trials > object$trials["Actual"]) {
+      cli_warn(c(
+        "{.arg trials} should be <= {object$trials['Actual']} for this object.",
+        "i" = "Predictions generated using {object$trials['Actual']} trials."
+      ))
+    }
 
-    ## If there are case weights used during training, the C code
-    ## will expect a column of weights in the new data but the
-    ## values will be ignored. `makeDataFile` puts those last in
-    ## the data when `C5.0.default` is run, so we will add a
-    ## column of NA values at the end here
-    if (object$caseWeights)
-      newdata$case_weight_pred <- NA
-
-    ## make cases file
-    caseString <- makeDataFile(x = newdata, y = NULL)
+    if (trials <= 0) {
+      cli_abort("{.arg trials} must be a positive integer, not {.obj_type_friendly {trials}}.")
+    }
 
     ## When passing trials to the C code, convert to
     ## zero if the original version of trials is used
-
-    if (trials <= 0)
-      stop("'trials should be a positive integer", call. = FALSE)
-    if (trials == object$trials["Actual"])
+    if (trials == object$trials["Actual"]) {
       trials <- 0
+    }
 
-    ## Add trials (not object$trials) as an argument
-    Z <- .C(
-      "predictions",
-      as.character(caseString),
-      as.character(object$names),
-      as.character(object$tree),
-      as.character(object$rules),
-      as.character(object$cost),
-      pred = integer(nrow(newdata)),
-      confidence = double(length(object$levels) * nrow(newdata)),
-      trials = as.integer(trials),
-      output = character(1),
-      PACKAGE = "C50"
-    )
-    if(any(grepl("Error limit exceeded", Z$output)))
-      stop(Z$output, call. = FALSE)
+    if (isTRUE(object$format_version == 2L)) {
+      Z <- predict_c50_direct(object, newdata, trials)
+    } else {
+      Z <- predict_c50_legacy(object, newdata, trials)
+    }
+    if (any(grepl("Error limit exceeded", Z$output))) {
+      cli_abort(Z$output)
+    }
 
     if (type == "class") {
       out <- factor(object$levels[Z$pred], levels = object$levels)
     } else {
       out <-
-        matrix(Z$confidence,
-               ncol = length(object$levels),
-               byrow = TRUE)
-      if (!is.null(rownames(newdata)))
+        matrix(Z$confidence, ncol = length(object$levels), byrow = TRUE)
+      if (!is.null(rownames(newdata))) {
         rownames(out) <- rownames(newdata)
+      }
       colnames(out) <- object$levels
     }
     out
   }
+
+# Fits from version 0.2.0.9000 on store the attribute spec, and the data are
+# passed to the C code as vectors (see R/data-spec.R)
+predict_c50_direct <- function(object, newdata, trials, call = rlang::caller_env()) {
+  cols <- c50_data_columns(newdata, object$spec, new_data = TRUE, call = call)
+  model <- object$tree
+  if (object$rbm) {
+    model <- object$rules
+  }
+  .Call(
+    "C_c50_predict",
+    object$spec,
+    model,
+    isTRUE(object$rbm),
+    object$costMatrix,
+    cols,
+    as.integer(trials),
+    PACKAGE = "C50"
+  )
+}
+
+# Fits from earlier versions have only the text of the `.names` file, so the
+# new data are written in the `.cases` text format
+predict_c50_legacy <- function(object, newdata, trials) {
+  ## If there are case weights used during training, the C code
+  ## will expect a column of weights in the new data but the
+  ## values will be ignored. `makeDataFile` puts those last in
+  ## the data when `C5.0.default` is run, so we will add a
+  ## column of NA values at the end here
+  if (object$caseWeights) {
+    newdata$case_weight_pred <- NA
+  }
+
+  ## make cases file
+  caseString <- makeDataFile(x = newdata, y = NULL)
+
+  .C(
+    "predictions",
+    as.character(caseString),
+    as.character(object[["names"]]),
+    as.character(object$tree),
+    as.character(object$rules),
+    as.character(object$cost),
+    pred = integer(nrow(newdata)),
+    confidence = double(length(object$levels) * nrow(newdata)),
+    trials = as.integer(trials),
+    output = character(1),
+    PACKAGE = "C50"
+  )
+}

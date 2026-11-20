@@ -63,10 +63,10 @@ void ConstructClassifiers(void)
 /*   --------------------  */
 {
   CaseNo i, Errs, Cases, Bp, Excl = 0;
-  double ErrWt, ExclWt = 0, OKWt, ExtraErrWt, NFact, MinWt = 1.0, a, b;
+  double ErrWt, OKWt, ExtraErrWt, NFact, MinWt = 1.0, a, b;
   ClassNo c, Pred, Real, Best;
   static ClassNo *Wrong = Nil;
-  int BaseLeaves;
+  int BaseLeaves = 0;
   Boolean NoStructure, CheckExcl;
   float *BVote;
 
@@ -223,7 +223,6 @@ void ConstructClassifiers(void)
 
         if (BVote[Best] > BVote[Real] + (TRIALS - 1) - Trial) {
           Excl++;
-          ExclWt += Weight(Case[i]);
 
           Weight(Case[i]) = 0;
           Case[i] = Case[Bp];
@@ -431,8 +430,11 @@ void EvaluateSingle(int Flags)
 /*   --------------  */
 {
   ClassNo RealClass, PredClass;
-  int x, u, SaveUtility;
-  CaseNo *ConfusionMat, *Usage, i, RawErrs = 0, Errs = 0;
+  int x, u, SaveUtility = 0;
+  CaseNo *ConfusionMat, *Usage, i, Errs = 0;
+#ifdef VerbOpt
+  CaseNo RawErrs = 0;
+#endif
   double ECost = 0, Tests;
   Boolean CMInfo, UsageInfo;
 

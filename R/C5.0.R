@@ -1,6 +1,5 @@
-
 #' @export
-C5.0 <-  function(x, ...) UseMethod("C5.0")
+C5.0 <- function(x, ...) UseMethod("C5.0")
 
 #' C5.0 Decision Trees and Rule-Based Models
 #'
@@ -17,15 +16,58 @@ C5.0 <-  function(x, ...) UseMethod("C5.0")
 #'  This particular model handles non-numeric data of some types
 #'  (such as character, factor and ordered data).
 #'
-#' The cost matrix should by CxC, where C is the number of
-#'  classes. Diagonal elements are ignored. Columns should
-#'  correspond to the true classes and rows are the predicted
-#'  classes. For example, if C = 3 with classes Red, Blue and Green
-#'  (in that order), a value of 5 in the (2,3) element of the matrix
-#'  would indicate that the cost of predicting a Green sample as
-#'  Blue is five times the usual value (of one). Note that when
-#'  costs are used, class probabilities cannot be generated using
-#' [predict.C5.0()].
+#' Predictors can be numeric, factor, ordered factor, or character
+#'  columns. Character columns are treated as factors with sorted
+#'  levels. Names and values are used exactly as given: there are no
+#'  reserved names or special values, so a column can be called
+#'  `"case weight"`, and a factor level can be `"?"`, `"N/A"`, or an
+#'  empty string. The only exception is that no predictor can have
+#'  the same name as the outcome label (`label` in [C5.0Control()]).
+#'  Missing values (`NA`) are allowed in the predictors; C5.0 handles
+#'  them directly. Rows with a missing outcome are not used.
+#'
+#' @section Costs:
+#' The cost matrix should be CxC, where C is the number of
+#'  classes. Columns should correspond to the true classes and rows
+#'  are the predicted classes. For example, if C = 3 with classes
+#'  Red, Blue and Green (in that order), a value of 5 in the (2,3)
+#'  element of the matrix would indicate that the cost of predicting
+#'  a Green sample as Blue is five times the usual value (of one).
+#'
+#' The row and column names must both be the levels of `y`. They can
+#'  be in any order: rows are matched by the row names and columns
+#'  by the column names. If the matrix has no dimnames, the levels of
+#'  `y` are used, in order, with a warning.
+#'
+#' Which values are used:
+#'  * Diagonal elements are ignored.
+#'  * An off-diagonal value of 1 is the default cost, so it has no
+#'    effect.
+#'  * All other off-diagonal values are used, including values
+#'    between 0 and 1.
+#'  * A value of 0 (an error with no cost) is allowed when there are
+#'    three or more classes. With two classes, both off-diagonal
+#'    values must be greater than 0.
+#'  * Negative, missing, and infinite values are errors.
+#'
+#' How the costs are used depends on the number of classes:
+#'  * With two classes, the training cases are reweighted so that
+#'    cases of the class whose errors cost more count for more. These
+#'    weights are multiplied by any case `weights`, and `minCases` is
+#'    lowered to match.
+#'  * With any number of classes, the predicted class is the one with
+#'    the lowest expected cost, not the most probable one. Because of
+#'    this, class probabilities cannot be generated with
+#'    [predict.C5.0()] when costs are used.
+#'  * For rule-based models with three or more classes, the costs are
+#'    also used when the rules are formed.
+#'
+#' Up to version 0.2.0, off-diagonal costs that were not greater than
+#'  1 were dropped without a message, so that C5.0 used a cost of 1
+#'  instead (a value of 0.5, for example, had no effect). The row
+#'  names of the matrix were also ignored, and the rows were assumed
+#'  to be in the order of the column names. Models fitted with such
+#'  cost matrices will differ from those versions.
 #'
 #' Internally, the code will attempt to halt boosting if it
 #'  appears to be ineffective. For this reason, the value of
@@ -38,7 +80,11 @@ C5.0 <-  function(x, ...) UseMethod("C5.0")
 #' @param y a factor vector with 2 or more levels
 #' @param trials an integer specifying the number of boosting
 #'  iterations. A value of one indicates that a single model is
-#'  used.
+#'  used. There is no upper limit, but fitting time, memory use, and
+#'  model size grow linearly with the number of trials. When
+#'  `earlyStopping = TRUE` in [C5.0Control()] (the default), boosting
+#'  can stop before the requested number of trials; see the `trials`
+#'  element of the returned object for the number actually used.
 #' @param rules A logical: should the tree be decomposed into a
 #'  rule-based model?
 #' @param weights an optional numeric vector of case weights. Note
@@ -50,7 +96,9 @@ C5.0 <-  function(x, ...) UseMethod("C5.0")
 #'  [C5.0Control()]
 #' @param costs a matrix of costs associated with the possible
 #'  errors. The matrix should have C columns and rows where C is the
-#'  number of class levels.
+#'  number of class levels. Rows are the predicted classes and
+#'  columns are the true classes. See the Costs section for which
+#'  values are used and how.
 #' @param formula a formula, with a response and at least one predictor.
 #' @param data an optional data frame in which to interpret the
 #'  variables named in the formula.
@@ -65,30 +113,39 @@ C5.0 <-  function(x, ...) UseMethod("C5.0")
 #'
 #'   \item{boostResults}{ a parsed version of the boosting table(s)
 #'  shown in the output }
-#'   \item{call}{ the function call } \item{caseWeights}{ not
-#'  currently supported. }
+#'   \item{call}{ the function call }
+#'   \item{caseWeights}{ a logical: were case weights used? }
 #'   \item{control}{ an echo of the specifications from
 #'  [C5.0Control()] }
-#'   \item{cost}{ the text version of the cost matrix (or "") }
-#'   \item{costMatrix}{ an echo of the model argument }
+#'   \item{cost}{ the text version of the cost matrix (or "" when
+#'  no off-diagonal cost differs from 1) }
+#'   \item{costMatrix}{ the cost matrix, with its rows and columns in
+#'  the order of the class levels }
 #'   \item{dims}{ original dimensions of the predictor matrix or
 #'  data frame }
 #'   \item{levels}{ a character vector of factor levels for the
 #'  outcome }
-#'   \item{names}{ a string version of the names file }
+#'   \item{names}{ a string version of the names file. The C code
+#'  does not use it; it is kept for code that reads the predictor
+#'  types and levels from it. }
 #'   \item{output}{ a string version of the command line output }
 #'   \item{predictors}{ a character vector of predictor names }
 #'   \item{rbm}{ a logical for rules }
 #'   \item{rules}{ a character version of the rules file }
 #'   \item{size}{ n integer vector of the tree/rule size (or sizes
 #'  in the case of boosting) }
-#'.  \item{tree}{ a string version of the tree file }
+#'   \item{spec}{ a description of the predictors and the outcome
+#'  (names, types, and levels) that [predict.C5.0()] uses to
+#'  prepare new data }
+#'   \item{format_version}{ the version of the data interface;
+#'  `2` for models fitted with this version of the package }
+#'   \item{tree}{ a string version of the tree file }
 #'   \item{trials}{ a named vector with elements `Requested`
 #'  (an echo of the function call) and `Actual` (how many the
 #'  model used) }
 #' @note The command line version currently supports more data
-#'  types than the R port. Currently, numeric, factor and ordered
-#'  factors are allowed as predictors.
+#'  types than the R port. Currently, numeric, factor, ordered
+#'  factor, and character columns are allowed as predictors.
 #' @author Original GPL C code by Ross Quinlan, R code and
 #'  modifications to C by Max Kuhn, Steve Weston and Nathan Coulter
 #' @seealso [C5.0Control()], [summary.C5.0()],
@@ -97,7 +154,6 @@ C5.0 <-  function(x, ...) UseMethod("C5.0")
 #'  Learning. Morgan Kaufmann Publishers,
 #'  \url{http://www.rulequest.com/see5-unix.html}
 #' @keywords models
-#' @useDynLib C50
 #' @examples
 #'
 #' library(modeldata)
@@ -114,25 +170,28 @@ C5.0 <-  function(x, ...) UseMethod("C5.0")
 #' @export
 #' @rawNamespace export(C5.0.default)
 #' @rdname C5.0
-#' @importFrom Cubist makeDataFile makeNamesFile QuinlanAttributes
-
-C5.0.default <- function(x,
-                         y,
-                         trials = 1,
-                         rules = FALSE,
-                         weights = NULL,
-                         control = C5.0Control(),
-                         costs = NULL,
-                         ...) {
+C5.0.default <- function(
+  x,
+  y,
+  trials = 1,
+  rules = FALSE,
+  weights = NULL,
+  control = C5.0Control(),
+  costs = NULL,
+  ...
+) {
   funcCall <- match.call(expand.dots = TRUE)
-  if (!is.factor(y))
-    stop("C5.0 models require a factor outcome", call. = FALSE)
-  if (is.null(colnames(x)))
-    stop("column names are required", call. = FALSE)
+  if (!is.factor(y)) {
+    cli_abort("{.arg y} must be a factor, not {.obj_type_friendly {y}}.")
+  }
+  if (is.null(colnames(x))) {
+    cli_abort("{.arg x} must have column names.")
+  }
   if (control$bands > 2 & !rules) {
-    warning("rule banding only works with rules; ",
-            "'rules' was changed to TRUE",
-            call. = FALSE)
+    cli_warn(c(
+      "Rule banding only works with rules.",
+      "i" = "{.arg rules} was changed to {.val TRUE}."
+    ))
     rules <- TRUE
   }
 
@@ -141,71 +200,117 @@ C5.0.default <- function(x,
   lvl <- levels(y)
   nClass <- length(lvl)
   if (!is.null(costs)) {
-    if (!is.matrix(costs))
-      stop("'costs' should be a matrix", call. = FALSE)
-    if (ncol(costs) != nClass | nrow(costs) != nClass)
-      stop("'cost should be a ", nClass, "x", nClass,
-           "matrix", call. = FALSE)
+    if (!is.matrix(costs)) {
+      cli_abort(
+        "{.arg costs} must be a matrix, not {.obj_type_friendly {costs}}."
+      )
+    }
+    if (ncol(costs) != nClass | nrow(costs) != nClass) {
+      cli_abort(c(
+        "{.arg costs} must be a {nClass}x{nClass} matrix.",
+        "x" = "Provided: {nrow(costs)}x{ncol(costs)}."
+      ))
+    }
     if (is.null(dimnames(costs))) {
-      warning("no dimnames were given for the cost matrix; ",
-              "the factor levels will be used", call. = FALSE)
+      cli_warn(c(
+        "No dimnames were given for the cost matrix.",
+        "i" = "The factor levels will be used."
+      ))
       colnames(costs) <- lvl
       rownames(costs) <- lvl
     } else {
-      if (is.null(colnames(costs)) |
-          is.null(rownames(costs)))
-        stop("both row and column names are needed", call. = FALSE)
+      if (
+        is.null(colnames(costs)) |
+          is.null(rownames(costs))
+      ) {
+        cli_abort("{.arg costs} must have both row and column names.")
+      }
     }
+    costs <- c50_cost_matrix(costs, lvl)
     costString <- makeCostFile(costs)
-  } else
+  } else {
     costString <- ""
-
-  maxtrials <- 100
-  if (trials < 1 | trials > maxtrials)
-    stop("number of boosting iterations must be between 1 and ",
-         maxtrials, call. = FALSE)
-
-  if (!is.data.frame(x) &
-      !is.matrix(x))
-    stop("x must be a matrix or data frame", call. = FALSE)
-
-  if (inherits(x, "tbl_df")) {
-    x <- as.data.frame(x)
   }
 
-  if (!is.null(weights) && !is.numeric(weights))
-    stop("case weights must be numeric", call. = FALSE)
+  trials_ok <-
+    is.numeric(trials) &&
+    length(trials) == 1 &&
+    !is.na(trials) &&
+    trials >= 1 &&
+    trials <= .Machine$integer.max &&
+    trials == round(trials)
+  if (!trials_ok) {
+    trials_scalar <- is.numeric(trials) && length(trials) == 1 && !is.na(trials)
+    if (trials_scalar) {
+      trials_desc <- cli::format_inline("{.val {trials}}")
+    } else {
+      trials_desc <- cli::format_inline("{.obj_type_friendly {trials}}")
+    }
+    cli_abort(
+      "{.arg trials} must be a single whole number >= 1, not {trials_desc}."
+    )
+  }
 
-  ## TODO: add case weights to these files when needed
-  namesString <-
-    makeNamesFile(x,
-                  y,
-                  w = weights,
-                  label = control$label,
-                  comments = TRUE)
-  dataString <- makeDataFile(x, y, weights)
+  if (
+    !is.data.frame(x) &
+      !is.matrix(x)
+  ) {
+    cli_abort(
+      "{.arg x} must be a matrix or data frame, not {.obj_type_friendly {x}}."
+    )
+  }
 
-  Z <- .C(
-    "C50",
-    as.character(namesString),
-    as.character(dataString),
-    as.character(costString),
+  if (!is.data.frame(x) || inherits(x, "tbl_df")) {
+    x <- as.data.frame(x, stringsAsFactors = FALSE)
+  }
+
+  if (length(y) != nrow(x)) {
+    cli_abort(
+      "{.arg y} must have one value per row of {.arg x} ({nrow(x)}), not
+       {length(y)}."
+    )
+  }
+
+  if (!is.null(weights)) {
+    if (!is.numeric(weights)) {
+      cli_abort(
+        "{.arg weights} must be numeric, not {.obj_type_friendly {weights}}."
+      )
+    }
+    if (length(weights) != nrow(x)) {
+      cli_abort(
+        "{.arg weights} must have one value per row of {.arg x}
+         ({nrow(x)}), not {length(weights)}."
+      )
+    }
+    check_finite(weights, "weights")
+    weights <- as.double(weights)
+  }
+
+  ## The data are passed to the C code as vectors; see R/data-spec.R
+  spec <- c50_data_spec(
+    x,
+    y,
+    label = control$label,
+    has_weights = !is.null(weights)
+  )
+  x_cols <- c50_data_columns(x, spec)
+
+  Z <- .Call(
+    "C_c50_fit",
+    spec,
+    x_cols,
+    as.integer(y),
+    weights,
+    costs,
     as.logical(control$subset),
     # -s "use the Subset option" var name: SUBSET
     as.logical(rules),
     # -r "use the Ruleset option" var name: RULES
-
-    ## for the bands option, I'm not sure what the default should be.
     as.integer(control$bands),
     # -u "sort rules by their utility into bands" var name: UTILITY
-
-    ## The documentation has two options for boosting:
-    ## -b use the Boosting option with 10 trials
-    ## -t trials ditto with specified number of trial
-    ## I think we should use -t
     as.integer(trials),
-    # -t : " ditto with specified number of trial", var name: TRIALS
-
+    # -t : "ditto with specified number of trial", var name: TRIALS
     as.logical(control$winnow),
     # -w "winnow attributes before constructing a classifier" var name: WINNOW
     as.double(control$sample),
@@ -217,39 +322,38 @@ C5.0.default <- function(x,
     # -g: "turn off the global tree pruning stage" var name: GLOBAL
     as.double(control$CF),
     # -c: "set the Pruning CF value" var name: CF
-
-    ## Also, for the number of minimum cases, I'm not sure what the
-    ## default should be. The code looks like it dynamically sets the
-    ## value (as opposed to a static, universal integer
     as.integer(control$minCases),
     # -m : "set the Minimum cases" var name: MINITEMS
-
     as.logical(control$fuzzyThreshold),
     # -p "use the Fuzzy thresholds option" var name: PROBTHRESH
     as.logical(control$earlyStopping),
     # toggle C5.0 to check to see if we should stop boosting early
-    ## the model is returned in 2 files: .rules and .tree
-    tree = character(1),
-    # pass back C5.0 tree as a string
-    rules = character(1),
-    # pass back C5.0 rules as a string
-    output = character(1),
-    # get output that normally goes to screen
     PACKAGE = "C50"
   )
 
+  parse_model_failure(Z$output)
+  
+  ## Strip timestamps from output if requested
+  if (control$strip_time_stamps) {
+    Z$output <- strip_time_stamps(Z$output)
+  }
+  parse_model_failure(Z$output)
+
   ## Figure out how may trials were actually used.
   modelContent <- strsplit(
-    if (rules)
+    if (rules) {
       Z$rules
-    else
-      Z$tree, "\n"
+    } else {
+      Z$tree
+    },
+    "\n"
   )[[1]]
   entries <- grep("^entries", modelContent, value = TRUE)
   if (length(entries) > 0) {
     actual <- as.numeric(substring(entries, 10, nchar(entries) - 1))
-  } else
+  } else {
     actual <- trials
+  }
 
   if (trials > 1) {
     boostResults <- getBoostResults(Z$output)
@@ -259,17 +363,18 @@ C5.0.default <- function(x,
     ## C5.0.default: no visible binding for global variable 'Data'
     Data <- NULL
     size <-
-      if (!is.null(boostResults))
+      if (!is.null(boostResults)) {
         subset(boostResults, Data == "Training Set")$Size
-    else
-      NA
-  }   else {
+      } else {
+        NA
+      }
+  } else {
     boostResults <- NULL
     size <- length(grep("[0-9])$", strsplit(Z$output, "\n")[[1]]))
   }
 
   out <- list(
-    names = namesString,
+    names = c50_names_string(spec),
     cost = costString,
     costMatrix = costs,
     caseWeights = !is.null(weights),
@@ -284,7 +389,9 @@ C5.0.default <- function(x,
     output = Z$output,
     tree = Z$tree,
     predictors = colnames(x),
-    rules = Z$rules
+    rules = Z$rules,
+    spec = spec,
+    format_version = 2L
   )
 
   class(out) <- "C5.0"
@@ -294,14 +401,8 @@ C5.0.default <- function(x,
 #' @export
 #' @rawNamespace export(C5.0.formula)
 #' @rdname C5.0
-#' @importFrom stats na.pass model.extract .getXlevels terms
 C5.0.formula <-
-  function (formula,
-            data,
-            weights,
-            subset,
-            na.action = na.pass,
-            ...)  {
+  function(formula, data, weights, subset, na.action = na.pass, ...) {
     call <- match.call()
 
     m <- match.call(expand.dots = FALSE)
@@ -313,21 +414,19 @@ C5.0.formula <-
 
     y <- model.extract(m, "response")
     wt <- model.extract(m, "weights")
-    if (length(wt) == 0L)
+    if (length(wt) == 0L) {
       wt <- NULL
-    if ("(weights)" %in% colnames(m))
+    }
+    if ("(weights)" %in% colnames(m)) {
       m[, "(weights)"] <- NULL
+    }
 
     m <- m[, -1, drop = FALSE]
-    out <- C5.0.default(x = m,
-                        y = y,
-                        weights = wt,
-                        ...)
+    out <- C5.0.default(x = m, y = y, weights = wt, ...)
     out$call <- call
     out$Terms <- Terms
     out$xlevels <- .getXlevels(Terms, m)
     out
-
   }
 
 #' Control for C5.0 Models
@@ -366,7 +465,12 @@ C5.0.formula <-
 #' @param earlyStopping A logical to toggle whether the internal
 #'  method for stopping boosting should be used.
 #' @param label A character label for the outcome used in the
-#'  output. @return A list of options.
+#'  output.
+#' @param strip_time_stamps A logical to toggle whether timestamps
+#'  should be removed from the C5.0 output. This removes the date/time
+#'  from the header line and the "Time:" line showing execution time.
+#'  Default is `TRUE` to make output reproducible.
+#' @return A list of options.
 #' @author Original GPL C code by Ross Quinlan, R code and
 #'  modifications to C by Max Kuhn, Steve Weston and Nathan Coulter
 #' @seealso [C5.0()],[predict.C5.0()],
@@ -385,25 +489,31 @@ C5.0.formula <-
 #' summary(treeModel)
 #'
 #' @export
-C5.0Control <- function(subset = TRUE,
-                        ## in C, equals  SUBSET=0,	/* subset tests allowed */
-                        bands = 0,
-                        winnow = FALSE,
-                        noGlobalPruning = FALSE,
-                        CF = 0.25,
-                        minCases = 2,
-                        fuzzyThreshold = FALSE,
-                        sample = 0.0,
-                        seed = sample.int(4096, size = 1) - 1L,
-                        earlyStopping = TRUE,
-                        label = "outcome") {
-  if (CF < 0 | CF > 1)
-    stop("confidence level must between 0 and 1", call. = FALSE)
-  if (sample < 0.0 | sample > .999)
-    stop("sampling percentage must be between 0.0 and .999", call. = FALSE)
+C5.0Control <- function(
+  subset = TRUE,
+  ## in C, equals  SUBSET=0,	/* subset tests allowed */
+  bands = 0,
+  winnow = FALSE,
+  noGlobalPruning = FALSE,
+  CF = 0.25,
+  minCases = 2,
+  fuzzyThreshold = FALSE,
+  sample = 0.0,
+  seed = sample.int(4096, size = 1) - 1L,
+  earlyStopping = TRUE,
+  label = "outcome",
+  strip_time_stamps = TRUE
+) {
+  if (CF < 0 | CF > 1) {
+    cli_abort("{.arg CF} must be between 0 and 1, not {.val {CF}}.")
+  }
+  if (sample < 0.0 | sample > .999) {
+    cli_abort("{.arg sample} must be between 0 and 0.999, not {.val {sample}}.")
+  }
 
-  if (bands == 1 | bands > 10000)
-    stop("if used, bands must be between 2 and 10000", call. = FALSE)
+  if (bands == 1 | bands > 10000) {
+    cli_abort("{.arg bands} must be between 2 and 10000, not {.val {bands}}.")
+  }
 
   list(
     subset = subset,
@@ -416,27 +526,34 @@ C5.0Control <- function(subset = TRUE,
     sample = sample,
     earlyStopping = earlyStopping,
     label = label,
-    seed = seed %% 4096L
+    seed = seed %% 4096L,
+    strip_time_stamps = strip_time_stamps
   )
 }
 
 
 #' @export
 print.C5.0 <- function(x, ...) {
-  cat("\nCall:\n",
-      truncateText(deparse(x$call, width.cutoff = 500)),
-      "\n\n", sep = "")
+  cat(
+    "\nCall:\n",
+    truncateText(deparse(x$call, width.cutoff = 500)),
+    "\n\n",
+    sep = ""
+  )
 
-  if (x$rbm)
+  if (x$rbm) {
     cat("Rule-Based Model\n")
-  else
+  } else {
     cat("Classification Tree\n")
+  }
 
-  cat("Number of samples:",
-      x$dims[1],
-      "\nNumber of predictors:",
-      x$dims[2],
-      "\n\n")
+  cat(
+    "Number of samples:",
+    x$dims[1],
+    "\nNumber of predictors:",
+    x$dims[2],
+    "\n\n"
+  )
 
   if (x$trials["Requested"] > 1) {
     if (x$trials[1] == x$trials[2]) {
@@ -450,41 +567,62 @@ print.C5.0 <- function(x, ...) {
         "used due to early stopping\n"
       )
     }
-    if (!all(is.na(x$size)))
+    if (!all(is.na(x$size))) {
       cat(
         ifelse(x$rbm, "Average number of rules:", "Average tree size:"),
         round(mean(x$size, na.rm = TRUE), 1),
         "\n\n"
       )
-    else
+    } else {
       cat("\n")
-  } else
+    }
+  } else {
     cat(ifelse(x$rbm, "Number of Rules:", "Tree size:"), x$size, "\n\n")
+  }
 
   otherOptions <- NULL
-  if (x$control$subset)
+  if (x$control$subset) {
     otherOptions <- c(otherOptions, "attempt to group attributes")
-  if (x$control$winnow)
+  }
+  if (x$control$winnow) {
     otherOptions <- c(otherOptions, "winnowing")
-  if (x$control$noGlobalPruning)
+  }
+  if (x$control$noGlobalPruning) {
     otherOptions <- c(otherOptions, "no global pruning")
-  if (x$control$CF != 0.25)
-    otherOptions <- c(otherOptions,
-                      paste("confidence level: ", x$control$CF, sep = ""))
-  if (x$control$minCases != 2)
-    otherOptions <- c(otherOptions,
-                      paste("minimum number of cases: ", x$control$minCases, sep = ""))
-  if (x$control$fuzzyThreshold)
+  }
+  if (x$control$CF != 0.25) {
+    otherOptions <- c(
+      otherOptions,
+      paste("confidence level: ", x$control$CF, sep = "")
+    )
+  }
+  if (x$control$minCases != 2) {
+    otherOptions <- c(
+      otherOptions,
+      paste("minimum number of cases: ", x$control$minCases, sep = "")
+    )
+  }
+  if (x$control$fuzzyThreshold) {
     otherOptions <- c(otherOptions, "fuzzy thresholds")
-  if (x$control$bands > 0)
-    otherOptions <- c(otherOptions,
-                      paste(x$control$bands, " utility bands", sep = ""))
-  if (!x$control$earlyStopping &
-      x$trials["Requested"] > 1)
-    otherOptions <- c(otherOptions, "early stopping for boosting")
-  if (x$control$sample > 0)
-    otherOptions <- c(otherOptions,
-                      paste(round(100 * x$control$sample, 1), "% sub-sampling", sep = ""))
+  }
+  if (x$control$bands > 0) {
+    otherOptions <- c(
+      otherOptions,
+      paste(x$control$bands, " utility bands", sep = "")
+    )
+  }
+  if (
+    !x$control$earlyStopping &
+      x$trials["Requested"] > 1
+  ) {
+    otherOptions <- c(otherOptions, "no early stopping for boosting")
+  }
+  if (x$control$sample > 0) {
+    otherOptions <- c(
+      otherOptions,
+      paste(round(100 * x$control$sample, 1), "% sub-sampling", sep = "")
+    )
+  }
   if (!is.null(otherOptions)) {
     cat(truncateText(paste(
       "Non-standard options:",
@@ -504,11 +642,11 @@ print.C5.0 <- function(x, ...) {
     out <- strsplit(output[sizeIndex + 2], " ")[[1]]
     out <- out[!(out %in% c("\t", ""))]
     out <- out[!grepl("[[:punct:]]", out)]
-    if (length(out) > 0)
+    if (length(out) > 0) {
       cat("Tree Size: ", out, "\n")
+    }
   }
 }
-
 
 
 #' Summaries of C5.0 Models
@@ -555,28 +693,32 @@ print.C5.0 <- function(x, ...) {
 #' @method summary C5.0
 
 summary.C5.0 <- function(object, ...) {
-    out <- list(output = object$output, call = object$call)
-    class(out) <- "summary.C5.0"
-    out
-  }
+  out <- list(output = object$output, call = object$call)
+  class(out) <- "summary.C5.0"
+  out
+}
 
 #' @export
 print.summary.C5.0 <- function(x, ...) {
-    cat("\nCall:\n",
-        truncateText(deparse(x$call, width.cutoff = 500)),
-        "\n\n",
-        sep = "")
-    cat(x$output)
-    cat("\n")
-    invisible(x)
-  }
+  cat(
+    "\nCall:\n",
+    truncateText(deparse(x$call, width.cutoff = 500)),
+    "\n\n",
+    sep = ""
+  )
+  cat(x$output)
+  cat("\n")
+  invisible(x)
+}
 
 truncateText <- function(x) {
-  if (length(x) > 1)
+  if (length(x) > 1) {
     x <- paste(x, collapse = "")
+  }
   w <- options("width")$width
-  if (nchar(x) <= w)
+  if (nchar(x) <= w) {
     return(x)
+  }
 
   cont <- TRUE
   out <- x
@@ -586,20 +728,20 @@ truncateText <- function(x) {
 
     spaceIndex <- gregexpr("[[:space:]]", tmp2)[[1]]
     stopIndex <- spaceIndex[length(spaceIndex) - 1] - 1
-    tmp <- c(substring(tmp2, 1, stopIndex),
-             substring(tmp, stopIndex + 1))
+    tmp <- c(substring(tmp2, 1, stopIndex), substring(tmp, stopIndex + 1))
     out <-
-      if (length(out) == 1)
+      if (length(out) == 1) {
         tmp
-    else
-      c(out[1:(length(x) - 1)], tmp)
-    if (all(nchar(out) <= w))
+      } else {
+        c(out[1:(length(x) - 1)], tmp)
+      }
+    if (all(nchar(out) <= w)) {
       cont <- FALSE
+    }
   }
 
   paste(out, collapse = "\n")
 }
-
 
 
 #' Variable Importance Measures for C5.0 Models
@@ -651,138 +793,162 @@ truncateText <- function(x) {
 #' C5imp(treeModel, metric = "splits")
 #'
 #' @export
-C5imp <- function(object,
-                  metric = "usage",
-                  pct = TRUE,
-                  ...) {
-  if (!(metric %in% c("usage", "splits")))
-    stop("metric should be either 'usage' or 'splits'")
+C5imp <- function(object, metric = "usage", pct = TRUE, ...) {
+  if (!(metric %in% c("usage", "splits"))) {
+    cli_abort(
+      "{.arg metric} must be {.val usage} or {.val splits}, not {.obj_type_friendly {metric}}."
+    )
+  }
   allVar <- getOriginalVars(object)
-  allVar <- gsub("\\", "", allVar, fixed = TRUE)
   if (metric == "usage") {
     object$output <- strsplit(object$output, "\n")[[1]]
     usageIndex <-
       grep("Attribute usage:", object$output, fixed = TRUE)
-    if (length(usageIndex) == 0)
-      stop("Error in parsing model output")
+    if (length(usageIndex) == 0) {
+      cli_abort("Error in parsing model output.")
+    }
     object$output <-
       object$output[usageIndex:length(object$output)]
     usageData <-
       grep("%\t", object$output, fixed = TRUE, value = TRUE)
 
     usageData <- strsplit(usageData, "%", fixed = TRUE)
-    if (!all(unlist(lapply(usageData, length)) == 2))
-      stop("Error in parsing model output")
+    if (!all(unlist(lapply(usageData, length)) == 2)) {
+      cli_abort("Error in parsing model output.")
+    }
 
     usageData <-
-      lapply(usageData, function(x)
-        gsub("[[:blank:]]", "", x))
+      lapply(usageData, function(x) {
+        gsub("[[:blank:]]", "", x)
+      })
     usageData <-
       as.data.frame(do.call("rbind", usageData), stringsAsFactors = FALSE)
     elim <- allVar[!(allVar %in% usageData$V2)]
     if (length(elim) > 0) {
-      elimVars <- data.frame(V1 = 0,
-                             V2 = elim,
-                             stringsAsFactors = FALSE)
+      elimVars <- data.frame(V1 = 0, V2 = elim, stringsAsFactors = FALSE)
       usageData <- rbind(usageData, elimVars)
     }
     out <-
-      data.frame(Overall =  as.numeric(as.character(usageData$V1)))
-    rownames(out) <-  usageData$V2
+      data.frame(Overall = as.numeric(as.character(usageData$V1)))
+    rownames(out) <- usageData$V2
   } else {
     varData <- strsplit(paste(object$tree, object$rules), "\n")[[1]]
     varData <- grep("att=", varData, value = TRUE)
     varData <- breakUp(varData)
-    varData <- unlist(lapply(varData, function(x)
-      x["att"]))
+    varData <- unlist(lapply(varData, function(x) {
+      x["att"]
+    }))
 
     varData <-
       as.data.frame(table(varData), stringsAsFactors = FALSE)
     elim <- allVar[!(allVar %in% varData$varData)]
-    if (length(elim) > 0)
-    {
+    if (length(elim) > 0) {
       elimVars <-
-        data.frame(varData = elim,
-                   Freq = 0,
-                   stringsAsFactors = FALSE)
+        data.frame(varData = elim, Freq = 0, stringsAsFactors = FALSE)
       varData <- rbind(varData, elimVars)
     }
     out <-
-      data.frame(Overall =  as.numeric(as.character(varData$Freq)))
-    if (pct)
+      data.frame(Overall = as.numeric(as.character(varData$Freq)))
+    if (pct) {
       out$Overall <- out$Overall / sum(out$Overall) * 100
-    rownames(out) <-  varData$varData
+    }
+    rownames(out) <- varData$varData
   }
   out[order(out$Overall, decreasing = TRUE), , drop = FALSE]
 }
 
 breakUp <- function(y) {
-    y <- gsub("\"", "", y)
-    y <- strsplit(y, " ", fixed = TRUE)
-    y <- lapply(
-      y,
-      function(z) {
-        z <- strsplit(z, "=", fixed = TRUE)
-        nms <- unlist(lapply(z, function(a) a[1]))
-        val <- unlist(lapply(z, function(a) a[2]))
-        names(val) <- nms
-        val
-      }
-    )
-   y
-  }
-
-
-getOriginalVars <- function(x) {
-  treeDat <- strsplit(x$names, "\n")[[1]]
-  varStart <- grep(paste(x$control$label, ":", sep = ""),
-                   treeDat)
-  if (length(varStart) == 0)
-    stop("cannot parse names file")
-  treeDat <- treeDat[(varStart + 1):length(treeDat)]
-  treeDat <- strsplit(treeDat, ":")
-  unlist(lapply(treeDat, function(x)
-    x[1]))
+  y <- gsub("\"", "", y)
+  y <- strsplit(y, " ", fixed = TRUE)
+  y <- lapply(
+    y,
+    function(z) {
+      z <- strsplit(z, "=", fixed = TRUE)
+      nms <- unlist(lapply(z, function(a) a[1]))
+      val <- unlist(lapply(z, function(a) a[2]))
+      names(val) <- nms
+      val
+    }
+  )
+  y
 }
 
-getVars <- function(x)
-{
+
+getOriginalVars <- function(x, call = rlang::caller_env()) {
+  if (isTRUE(x$format_version == 2L)) {
+    return(x$spec$names)
+  }
+  treeDat <- strsplit(x[["names"]], "\n")[[1]]
+  varStart <- grep(paste(x$control$label, ":", sep = ""), treeDat)
+  if (length(varStart) == 0) {
+    cli_abort("Cannot parse names file.", call = call)
+  }
+  treeDat <- treeDat[(varStart + 1):length(treeDat)]
+  treeDat <- strsplit(treeDat, ":")
+  out <- unlist(lapply(treeDat, function(x) {
+    x[1]
+  }))
+  # the names in the legacy text are escaped
+  gsub("\\", "", out, fixed = TRUE)
+}
+
+getVars <- function(x) {
   ## One of these is always ""
   treeDat <- paste(x$tree, x$rules)
   treeDat <- strsplit(treeDat, "\n")[[1]]
   treeDat <- grep("att=", treeDat, value = TRUE)
   treeDat
-
 }
 
-getAtt <- function(x) {
+getAtt <- function(x, call = rlang::caller_env()) {
   strt <- regexpr("att=", x)
-  if (length(strt) == 0)
-    stop("cannot parse model file")
+  if (length(strt) == 0) {
+    cli_abort("Cannot parse model file.", call = call)
+  }
   strt <- strt + 5
   stp <- regexpr("(forks=)|(cut=)|(val=)", x)
-  if (length(stp) == 0)
-    stop("cannot parse model file")
+  if (length(stp) == 0) {
+    cli_abort("Cannot parse model file.", call = call)
+  }
   stp <- stp - 3
   substring(x, strt, stp)
 }
 
-C5predictors <- function(x, ...)
+C5predictors <- function(x, ...) {
   unique(getAtt(getVars(x)))
+}
+
+strip_time_stamps <- function(x) {
+  # Remove timestamp from header line:
+  # "C5.0 [Release 2.07 GPL Edition]  Thu Feb 26 11:05:49 2026"
+  # becomes "C5.0 [Release 2.07 GPL Edition]"
+  x <- gsub(
+    "(C5\\.0 \\[Release [^]]+\\])\\s+[A-Za-z]{3} [A-Za-z]{3} +\\d+ \\d{2}:\\d{2}:\\d{2} \\d{4}",
+    "\\1",
+    x
+  )
+  # Remove lines that start with "Time:" and end with "secs"
+  lines <- strsplit(x, "\n", fixed = TRUE)[[1]]
+  lines <- lines[!grepl("^Time:.*secs$", lines)]
+  paste(lines, collapse = "\n")
+}
 
 getBoostResults <- function(x) {
-  output <-  strsplit(x, "\n")[[1]]
+  output <- strsplit(x, "\n")[[1]]
   ## what above when sampling is used
   srt <- grep("^Trial\t", output)
   stp <- grep("^boost\t", output)
 
   ## error check for srt, stp
-  if (length(srt) == 0 | length(stp) == 0)
+  if (length(srt) == 0 | length(stp) == 0) {
     return(NULL)
-  if (any(stp - srt <= 0))
+  }
+  if (any(stp - srt <= 0)) {
     return(NULL)
-  if (length(srt) != length(stp))
+  }
+  if (length(srt) != length(stp)) {
     return(NULL)
+  }
 
   if (length(stp) > 1) {
     trainSrt <- grep("Evaluation on training data", output)
@@ -803,16 +969,15 @@ getBoostResults <- function(x) {
     boostResults$Data <- "Training Set"
   }
   boostResults
-
-
 }
 
 parseBoostTable <- function(x) {
   x <- gsub("(", " ", x, fixed = TRUE)
   x <- gsub("%)", "", x, fixed = TRUE)
   x <- strsplit(x, "[[:space:]]")
-  x <- lapply(x, function(x)
-    x[x != ""])
+  x <- lapply(x, function(x) {
+    x[x != ""]
+  })
 
   if (all(unlist(lapply(x, length)) %in% 4:5)) {
     x <- do.call("rbind", x)
@@ -820,8 +985,23 @@ parseBoostTable <- function(x) {
     x <- as.data.frame(x)
     cls <- c("Trial", "Size", "Errors", "Percent", "Cost")
     colnames(x) <- cls[1:ncol(x)]
-    x$Trial <-  x$Trial + 1
-  } else
+    x$Trial <- x$Trial + 1
+  } else {
     x <- NULL
+  }
   x
+}
+
+parse_model_failure <- function(x, call = rlang::caller_env()) {
+  if (!grepl("Error limit exceeded", x)) {
+    return(invisible(NULL))
+  }
+  y <- strsplit(x, split = "\n")[[1]]
+  y <- gsub("Error limit exceeded", "", y)
+  y <- gsub("*** ", "", y, fixed = TRUE)
+  y <- y[y != ""]
+  first_line <- grep("^------", y)
+  y <- y[(first_line + 1):length(y)]
+  cli::cli_abort(c("{.fn C5.0} failed with error:", x = "{y}"), call = call)
+  invisible(NULL)
 }
