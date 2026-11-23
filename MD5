@@ -1,6 +1,6 @@
-47b29e386fea663a78a9091e68d4b57f *DESCRIPTION
+76c1081565b03731b7850c4ba968d5d8 *DESCRIPTION
 0bda7e50217570e0738e0f70d99afe30 *NAMESPACE
-d17e35eac178c6546e6d0cd72cad765c *NEWS.md
+9a02ba417be51a71075833c631f24bf0 *NEWS.md
 3a1aa627991944fad5b45e858e449d58 *R/C5.0.R
 2f3e1021eae13d124e91fba66af54092 *R/C50-package.R
 43dd3917414a21172c71892f1541fe9a *R/as.party.C5.0.R
@@ -56,7 +56,7 @@ f324380c866f1b033686599dee6075bd *src/rdata.h
 b0109558540dc216dc2776386a0455e6 *src/rulebasedmodels.h
 c4407ce81ef40da9a3f3f79334a9bd67 *src/rules.c
 0abb3f5510e359a5442f1e2aabf581e5 *src/ruletree.c
-c771f1816d78f0e1afb9143c8eef1e63 *src/siftrules.c
+d31be7df06d42d53b54461e1f461d81c *src/siftrules.c
 3ac0a9ee9bcae351f099cd72f42721e3 *src/sort.c
 d1267f13deb23aa728b98438fed85648 *src/strbuf.c
 1d59f1d4c4a9bee0b7f01c60c532a613 *src/strbuf.h

@@ -1,7 +1,7 @@
 Type: Package
 Package: C50
 Title: C5.0 Decision Trees and Rule-Based Models
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: c(
     person("Max", "Kuhn", , "mxkuhn@gmail.com", role = c("aut", "cre")),
     person("Steve", "Weston", role = "ctb"),
@@ -32,7 +32,7 @@ Encoding: UTF-8
 LazyLoad: yes
 Config/roxygen2/version: 8.1.1
 NeedsCompilation: yes
-Packaged: 2026-11-19 20:06:21 UTC; max
+Packaged: 2026-11-21 19:51:42 UTC; max
 Author: Max Kuhn [aut, cre],
   Steve Weston [ctb],
   Mark Culp [ctb],
@@ -41,4 +41,4 @@ Author: Max Kuhn [aut, cre],
   RuleQuest Research [cph] (Copyright holder of imported C code),
   Rulequest Research Pty Ltd. [cph] (Copyright holder of imported C code)
 Repository: CRAN
-Date/Publication: 2026-11-20 17:20:02 UTC
+Date/Publication: 2026-11-23 08:00:02 UTC
